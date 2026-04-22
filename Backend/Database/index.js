@@ -1,5 +1,5 @@
 const { Pool } = require('pg');
-require('../config/env');
+require('../env');
 
 const sslConfig = [process.env.DB_SSL, process.env.PGSSLMODE]
   .some(value => String(value).toLowerCase() === 'true' || String(value).toLowerCase() === 'require')
