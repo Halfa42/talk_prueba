@@ -1,6 +1,41 @@
-import React from 'react';
+import React, { useState } from 'react';
+import axios from 'axios';
 
 export default function HomeLogin({ setAppScreen, roleView, setRoleView }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+
+  const handleLogin = async () => {
+    try {
+      const response = await axios.post('http://localhost:3000/api/auth/login', {
+        correo: email,
+        contrasena: password,
+      });
+
+      const { token, rol } = response.data;
+
+      // Save token (optional, for future requests)
+      localStorage.setItem('token', token);
+
+      // Redirect based on role
+      if (rol === 'tutor') {
+        setAppScreen('app');
+        setRoleView('tutorview');
+      } else if (rol === 'beneficiario') {
+        setAppScreen('app');
+        setRoleView('studentview');
+      } else if (rol === 'socio_formador') {
+        setAppScreen('app');
+        setRoleView('orgview');
+      } else {
+        setError('Rol no reconocido');
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'No se pudo iniciar sesión');
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-8 items-center min-h-[75vh] mt-8">
       {/* Lado Izquierdo: Branding / Inicio */}
@@ -20,36 +55,25 @@ export default function HomeLogin({ setAppScreen, roleView, setRoleView }) {
 
       {/* Lado Derecho: Login */}
       <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm p-10 h-full flex flex-col justify-center">
-        <div className="flex items-center gap-3 mb-8">
-          <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-bold text-xl">T</div>
-          <div>
-            <div className="font-semibold text-xl">TALK! Learning Platform</div>
-            <div className="text-sm text-slate-500">Access portal</div>
-          </div>
-        </div>
-        
         <h2 className="text-3xl font-bold mb-2">Iniciar sesión</h2>
-        <p className="text-slate-500 mb-8">Ingresa con tus credenciales para acceder a la plataforma según tu rol.</p>
-        
+        {error && <p className="text-red-500 mb-4">{error}</p>}
         <div className="space-y-4">
-          <input className="w-full rounded-2xl border border-slate-300 px-4 py-3" placeholder="Correo electrónico" type="email" />
-          <input className="w-full rounded-2xl border border-slate-300 px-4 py-3" placeholder="Contraseña" type="password" />
-          
-          <div className="pt-2">
-            <label className="text-sm font-medium text-slate-700 mb-1 block">Selecciona tu rol (Prueba):</label>
-            <select 
-              className="w-full rounded-2xl border border-slate-300 px-4 py-3 bg-white" 
-              value={roleView} 
-              onChange={(e) => setRoleView(e.target.value)}
-            >
-              <option value="org">Organización</option>
-              <option value="tutor">TutorTEC</option>
-              <option value="student">Beneficiario</option>
-            </select>
-          </div>
-
-          <button 
-            onClick={() => setAppScreen("app")} 
+          <input
+            className="w-full rounded-2xl border border-slate-300 px-4 py-3"
+            placeholder="Correo electrónico"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <input
+            className="w-full rounded-2xl border border-slate-300 px-4 py-3"
+            placeholder="Contraseña"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <button
+            onClick={handleLogin}
             className="w-full rounded-2xl bg-blue-600 text-white py-3 mt-4 font-medium hover:bg-blue-700 transition"
           >
             Entrar a la plataforma

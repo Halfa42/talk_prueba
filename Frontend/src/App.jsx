@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import "./App.css";
+import "./styles/App.css";
 
 // Vistas modulares
 import HomeLogin from "./views/login";
@@ -21,18 +21,6 @@ export default function App() {
   return (
     <div className={shell}>
       <div className="max-w-7xl mx-auto space-y-8">
-        
-        {/* Cabecera Principal */}
-        <div className="flex items-center justify-between bg-white p-4 rounded-3xl border border-slate-200 shadow-sm">
-          <div className="px-2">
-            <h1 className="text-2xl font-bold">TALK! Learning Platform</h1>
-          </div>
-          <div className="flex gap-2">
-            <button onClick={() => setAppScreen("home")} className={topSelector(appScreen === "home")}>Login</button>
-            <button onClick={() => setAppScreen("app")} className={topSelector(appScreen === "app")}>Plataforma</button>
-          </div>
-        </div>
-
         {/* Vista Home / Login fusionada */}
         {appScreen === "home" && (
           <HomeLogin 
