@@ -6,10 +6,11 @@ import {
   ClipboardList,
   CalendarDays,
   Users,
+  LogOut,
 } from "lucide-react";
 import KpiCard from "../components/KpiCard";
 
-export default function StudentView() {
+export default function StudentView({ onLogout }) {
   const [studentModule, setStudentModule] = useState("dashboard");
 
   const softCard = "bg-white rounded-2xl border border-slate-200 shadow-sm";
@@ -303,48 +304,58 @@ export default function StudentView() {
 
   return (
     <div className="flex min-h-[720px] bg-slate-50">
-      <aside className="w-72 bg-white border-r border-slate-200 p-4 space-y-2">
+      <aside className="w-72 bg-white border-r border-slate-200 p-4 flex flex-col">
+        <div className="space-y-2">
+          <button
+            onClick={() => setStudentModule("dashboard")}
+            className={menuClass(studentModule === "dashboard")}
+          >
+            <LayoutDashboard size={18} />
+            Dashboard
+          </button>
+          <button
+            onClick={() => setStudentModule("progress")}
+            className={menuClass(studentModule === "progress")}
+          >
+            <GraduationCap size={18} />
+            Mi avance
+          </button>
+          <button
+            onClick={() => setStudentModule("materials")}
+            className={menuClass(studentModule === "materials")}
+          >
+            <BookOpen size={18} />
+            Material de apoyo
+          </button>
+          <button
+            onClick={() => setStudentModule("tasks")}
+            className={menuClass(studentModule === "tasks")}
+          >
+            <ClipboardList size={18} />
+            Tareas
+          </button>
+          <button
+            onClick={() => setStudentModule("classes")}
+            className={menuClass(studentModule === "classes")}
+          >
+            <CalendarDays size={18} />
+            Mis clases
+          </button>
+          <button
+            onClick={() => setStudentModule("profile")}
+            className={menuClass(studentModule === "profile")}
+          >
+            <Users size={18} />
+            Mi perfil
+          </button>
+        </div>
+
         <button
-          onClick={() => setStudentModule("dashboard")}
-          className={menuClass(studentModule === "dashboard")}
+          onClick={onLogout}
+          className="mt-auto w-full flex items-center gap-3 text-left px-4 py-3 rounded-2xl text-sm border border-red-200 text-red-700 bg-red-50 hover:bg-red-100 transition"
         >
-          <LayoutDashboard size={18} />
-          Dashboard
-        </button>
-        <button
-          onClick={() => setStudentModule("progress")}
-          className={menuClass(studentModule === "progress")}
-        >
-          <GraduationCap size={18} />
-          Mi avance
-        </button>
-        <button
-          onClick={() => setStudentModule("materials")}
-          className={menuClass(studentModule === "materials")}
-        >
-          <BookOpen size={18} />
-          Material de apoyo
-        </button>
-        <button
-          onClick={() => setStudentModule("tasks")}
-          className={menuClass(studentModule === "tasks")}
-        >
-          <ClipboardList size={18} />
-          Tareas
-        </button>
-        <button
-          onClick={() => setStudentModule("classes")}
-          className={menuClass(studentModule === "classes")}
-        >
-          <CalendarDays size={18} />
-          Mis clases
-        </button>
-        <button
-          onClick={() => setStudentModule("profile")}
-          className={menuClass(studentModule === "profile")}
-        >
-          <Users size={18} />
-          Mi perfil
+          <LogOut size={18} />
+          Cerrar sesión
         </button>
       </aside>
       <main className="flex-1 p-6 space-y-6">{renderContent()}</main>

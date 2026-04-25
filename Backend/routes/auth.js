@@ -1,14 +1,21 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+require('../env');
 const { query } = require('../Database/index');
 
 const router = express.Router();
+const SECRET_KEY = process.env.JWT_SECRET;
 
 
 router.post('/login', async (req, res) => {
   const { correo, contrasena } = req.body;
   console.log('Datos recibidos:', { correo, contrasena }); 
+
+  if (!SECRET_KEY) {
+    console.error('Falta configurar JWT_SECRET en Backend/.env');
+    return res.status(500).json({ message: 'Configuracion interna incompleta: JWT_SECRET no definido' });
+  }
 
   try {
     const result = await query('SELECT * FROM usuario WHERE correo = $1', [correo]);

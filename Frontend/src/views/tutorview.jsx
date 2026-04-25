@@ -9,10 +9,11 @@ import {
   FolderOpen,
   CheckCircle2,
   Upload,
+  LogOut,
 } from "lucide-react";
 import KpiCard from "../components/KpiCard";
 
-export default function TutorView() {
+export default function TutorView({ onLogout }) {
   const [tutorModule, setTutorModule] = useState("dashboard");
   const [sessionTab, setSessionTab] = useState("registro");
   const [selectedStudent, setSelectedStudent] = useState({
@@ -716,48 +717,58 @@ export default function TutorView() {
 
   return (
     <div className="flex min-h-[860px] bg-slate-50">
-      <aside className="w-72 bg-white border-r border-slate-200 p-4 space-y-2">
+      <aside className="w-72 bg-white border-r border-slate-200 p-4 flex flex-col">
+        <div className="space-y-2">
+          <button
+            onClick={() => setTutorModule("dashboard")}
+            className={menuClass(tutorModule === "dashboard")}
+          >
+            <LayoutDashboard size={18} />
+            Dashboard
+          </button>
+          <button
+            onClick={() => setTutorModule("students")}
+            className={menuClass(tutorModule === "students")}
+          >
+            <Users size={18} />
+            Mis alumnos
+          </button>
+          <button
+            onClick={() => setTutorModule("materials")}
+            className={menuClass(tutorModule === "materials")}
+          >
+            <BookOpen size={18} />
+            Materiales
+          </button>
+          <button
+            onClick={() => setTutorModule("tasks")}
+            className={menuClass(tutorModule === "tasks")}
+          >
+            <ClipboardList size={18} />
+            Tareas y evaluación
+          </button>
+          <button
+            onClick={() => setTutorModule("session")}
+            className={menuClass(tutorModule === "session")}
+          >
+            <FileText size={18} />
+            Seguimiento de sesión
+          </button>
+          <button
+            onClick={() => setTutorModule("hours")}
+            className={menuClass(tutorModule === "hours")}
+          >
+            <Clock3 size={18} />
+            Horas acumuladas
+          </button>
+        </div>
+
         <button
-          onClick={() => setTutorModule("dashboard")}
-          className={menuClass(tutorModule === "dashboard")}
+          onClick={onLogout}
+          className="mt-auto w-full flex items-center gap-3 text-left px-4 py-3 rounded-2xl text-sm border border-red-200 text-red-700 bg-red-50 hover:bg-red-100 transition"
         >
-          <LayoutDashboard size={18} />
-          Dashboard
-        </button>
-        <button
-          onClick={() => setTutorModule("students")}
-          className={menuClass(tutorModule === "students")}
-        >
-          <Users size={18} />
-          Mis alumnos
-        </button>
-        <button
-          onClick={() => setTutorModule("materials")}
-          className={menuClass(tutorModule === "materials")}
-        >
-          <BookOpen size={18} />
-          Materiales
-        </button>
-        <button
-          onClick={() => setTutorModule("tasks")}
-          className={menuClass(tutorModule === "tasks")}
-        >
-          <ClipboardList size={18} />
-          Tareas y evaluación
-        </button>
-        <button
-          onClick={() => setTutorModule("session")}
-          className={menuClass(tutorModule === "session")}
-        >
-          <FileText size={18} />
-          Seguimiento de sesión
-        </button>
-        <button
-          onClick={() => setTutorModule("hours")}
-          className={menuClass(tutorModule === "hours")}
-        >
-          <Clock3 size={18} />
-          Horas acumuladas
+          <LogOut size={18} />
+          Cerrar sesión
         </button>
       </aside>
       <main className="flex-1 p-6 space-y-6">{renderContent()}</main>

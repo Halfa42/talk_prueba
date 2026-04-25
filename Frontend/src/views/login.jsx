@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { Eye, EyeOff } from 'lucide-react';
 
-export default function HomeLogin({ setAppScreen, roleView, setRoleView }) {
+export default function HomeLogin({ setAppScreen, setRoleView }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async () => {
     try {
@@ -21,13 +23,13 @@ export default function HomeLogin({ setAppScreen, roleView, setRoleView }) {
       // Redirect based on role
       if (rol === 'tutor') {
         setAppScreen('app');
-        setRoleView('tutorview');
+        setRoleView('tutor');
       } else if (rol === 'beneficiario') {
         setAppScreen('app');
-        setRoleView('studentview');
+        setRoleView('student');
       } else if (rol === 'socio_formador') {
         setAppScreen('app');
-        setRoleView('orgview');
+        setRoleView('org');
       } else {
         setError('Rol no reconocido');
       }
@@ -37,7 +39,7 @@ export default function HomeLogin({ setAppScreen, roleView, setRoleView }) {
   };
 
   return (
-    <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-8 items-center min-h-[75vh] mt-8">
+    <div className="w-full min-h-screen grid lg:grid-cols-2 gap-8 items-center p-6 lg:p-10">
       {/* Lado Izquierdo: Branding / Inicio */}
       <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden h-full flex flex-col">
         <div className="p-8 relative bg-slate-50 flex-1 flex flex-col items-center justify-center min-h-[300px]">
@@ -65,13 +67,23 @@ export default function HomeLogin({ setAppScreen, roleView, setRoleView }) {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
-          <input
-            className="w-full rounded-2xl border border-slate-300 px-4 py-3"
-            placeholder="Contraseña"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+          <div className="relative">
+            <input
+              className="w-full rounded-2xl border border-slate-300 px-4 py-3 pr-12"
+              placeholder="Contraseña"
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((prev) => !prev)}
+              className="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-500 hover:text-slate-700"
+              aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
           <button
             onClick={handleLogin}
             className="w-full rounded-2xl bg-blue-600 text-white py-3 mt-4 font-medium hover:bg-blue-700 transition"

@@ -1,10 +1,6 @@
 const express = require('express')
 const cors = require('cors')
 const { query } = require('./Database/index')
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-
-const SECRET_KEY = 'your_secret_key'; // Replace with a secure key in production
 
 const app = express()
 
