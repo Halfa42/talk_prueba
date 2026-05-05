@@ -1,0 +1,27 @@
+/* Styles for TutorTasks */
+.task-input {
+  width: 100%;
+  border-radius: 1rem;
+  border: 1px solid #e2e8f0;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+}
+.task-textarea {
+  width: 100%;
+  border-radius: 1rem;
+  border: 1px solid #e2e8f0;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+}
+.task-button {
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  border-radius: 1rem;
+}
+.task-button.primary {
+  background-color: #2563eb;
+  color: white;
+}
+.task-button.secondary {
+  background-color: #f1f5f9;
+}
