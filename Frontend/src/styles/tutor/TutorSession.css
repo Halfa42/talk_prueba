@@ -1,0 +1,25 @@
+/* Styles for TutorSession */
+.session-input {
+  border-radius: 1rem;
+  border: 1px solid #e2e8f0;
+  padding: 0.75rem 1rem;
+}
+.session-textarea {
+  margin-top: 1rem;
+  width: 100%;
+  border-radius: 1rem;
+  border: 1px solid #e2e8f0;
+  padding: 0.75rem 1rem;
+}
+.session-button {
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  border-radius: 1rem;
+}
+.session-button.primary {
+  background-color: #2563eb;
+  color: white;
+}
+.session-button.secondary {
+  background-color: #f1f5f9;
+}

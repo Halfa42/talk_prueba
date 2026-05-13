@@ -25,7 +25,7 @@ CREATE TABLE usuario (
     fecha_registro   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT chk_usuario_rol
-        CHECK (rol IN ('tutor', 'beneficiario', 'socio_formador', 'admin'))
+        CHECK (rol IN ('tutor', 'beneficiario', 'socio_formador', 'revisor'))
 );
 
 
@@ -224,5 +224,100 @@ CREATE INDEX idx_bitacora_id_sesion          ON bitacora(id_sesion);
 CREATE INDEX idx_avance_id_beneficiario      ON avance(id_beneficiario);
 CREATE INDEX idx_tarea_id_asignacion         ON tarea(id_asignacion);
 CREATE INDEX idx_entrega_id_tarea            ON entrega(id_tarea);
+
+
+WITH nuevo_tutor AS (
+    INSERT INTO usuario (
+        nombre,
+        apellido_paterno,
+        apellido_materno,
+        correo,
+        contrasena,
+        rol,
+        estatus
+    )
+    VALUES (
+        'Tutor',
+        'Prueba',
+        'Talk',
+        'tutor@talk.com',
+        '$2a$12$nug2/tHzcOCOHwGLmm9/RudnXfahb1GYmjQfoIa8WCPnQRhayIz7.',
+        'tutor',
+        'activo'
+    )
+    RETURNING id_usuario
+)
+INSERT INTO tutortec (id_usuario, idioma, horas_acumuladas)
+SELECT id_usuario, 'espanol', 0
+FROM nuevo_tutor;
+
+WITH nuevo_beneficiario AS (
+    INSERT INTO usuario (
+        nombre,
+        apellido_paterno,
+        apellido_materno,
+        correo,
+        contrasena,
+        rol,
+        estatus
+    )
+    VALUES (
+        'Beneficiario',
+        'Prueba',
+        'Talk',
+        'beneficiario@talk.com',
+        '$2a$12$jiqBFGF3.ryGGV4E5hbYL.asDHVdtJM7xN4piUI5aj.q3/5NPgeSW',
+        'beneficiario',
+        'activo'
+    )
+    RETURNING id_usuario
+)
+INSERT INTO beneficiario (id_usuario, matricula_folio, nivel, idioma)
+SELECT id_usuario, 'MAT-0001', 'A1', 'espanol'
+FROM nuevo_beneficiario;
+
+WITH nuevo_socio_formador AS (
+    INSERT INTO usuario (
+        nombre,
+        apellido_paterno,
+        apellido_materno,
+        correo,
+        contrasena,
+        rol,
+        estatus
+    )
+    VALUES (
+        'Socio',
+        'Formador',
+        'Talk',
+        'socio_formador@talk.com',
+        '$2a$12$5uL20rWrwL6CGvv6b22v3eeWBR.9/XEDB7FHZj.mrWPSR/zNF7g66',
+        'socio_formador',
+        'activo'
+    )
+    RETURNING id_usuario
+)
+INSERT INTO socio_formador (id_usuario, cargo, area)
+SELECT id_usuario, 'Coordinador', 'Vinculacion'
+FROM nuevo_socio_formador;
+
+INSERT INTO usuario (
+    nombre,
+    apellido_paterno,
+    apellido_materno,
+    correo,
+    contrasena,
+    rol,
+    estatus
+)
+VALUES (
+    'Revisor',
+    'Prueba',
+    'Talk',
+    'revisor@talk.com',
+    '$2a$12$x9iWO/XvleFX8WyDSPzJ2OJ9F344UH1bOv2uDAYqwP99mo.zn5H.2',
+    'revisor',
+    'activo'
+);
 
 COMMIT;

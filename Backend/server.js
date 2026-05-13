@@ -11,20 +11,39 @@ app.get('/api/test', (req, res) => {
   res.json({ mensaje: 'Backend funcionando' })
 })
 
-app.get('/api/db-check', async (req, res) => {
+const fetchDatabaseNow = async () => {
+  const result = await query('SELECT NOW()')
+  return result.rows[0].now
+}
+
+const DBsuccess = (res, timestamp) => {
+  res.json({
+    status: '✅ Conectado a la base de datos',
+    timestamp,
+  })
+}
+
+const DBerror = (res, error) => {
+  res.status(500).json({
+    status: '❌ Error de conexión',
+    error: error.message,
+  })
+}
+
+const handleDbCheck = async (req, res) => {
   try {
-    const result = await query('SELECT NOW()')
-    res.json({ 
-      status: '✅ Conectado a la base de datos',
-      timestamp: result.rows[0].now 
-    })
+    const timestamp = await fetchDatabaseNow()
+    DBsuccess(res, timestamp)
   } catch (error) {
-    res.status(500).json({ 
-      status: '❌ Error de conexión',
-      error: error.message 
-    })
+    DBerror(res, error)
   }
-})
+}
+
+app.get('/api/db-check', handleDbCheck)
+
+const authRoutes = require('./routes/auth');
+
+app.use('/api/auth', authRoutes);
 
 app.listen(3000, () => {
   console.log('Servidor en http://localhost:3000')

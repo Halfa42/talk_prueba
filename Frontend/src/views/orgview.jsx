@@ -8,10 +8,11 @@ import {
   FileText,
   FolderOpen,
   BookOpen,
+  LogOut,
 } from "lucide-react";
 import KpiCard from "../components/KpiCard";
 
-export default function OrgView() {
+export default function OrgView({ onLogout }) {
   const [orgModule, setOrgModule] = useState("dashboard");
 
   const softCard = "bg-white rounded-2xl border border-slate-200 shadow-sm";
@@ -469,62 +470,72 @@ export default function OrgView() {
 
   return (
     <div className="flex min-h-[760px] bg-slate-50">
-      <aside className="w-72 bg-white border-r border-slate-200 p-4 space-y-2">
+      <aside className="w-72 bg-white border-r border-slate-200 p-4 flex flex-col">
+        <div className="space-y-2">
+          <button
+            onClick={() => setOrgModule("dashboard")}
+            className={menuClass(orgModule === "dashboard")}
+          >
+            <LayoutDashboard size={18} />
+            Dashboard
+          </button>
+          <button
+            onClick={() => setOrgModule("beneficiaries")}
+            className={menuClass(orgModule === "beneficiaries")}
+          >
+            <GraduationCap size={18} />
+            Beneficiarios
+          </button>
+          <button
+            onClick={() => setOrgModule("tutors")}
+            className={menuClass(orgModule === "tutors")}
+          >
+            <Users size={18} />
+            Tutores
+          </button>
+          <button
+            onClick={() => setOrgModule("assignment")}
+            className={menuClass(orgModule === "assignment")}
+          >
+            <CalendarDays size={18} />
+            Asignaciones
+          </button>
+          <button
+            onClick={() => setOrgModule("tracking")}
+            className={menuClass(orgModule === "tracking")}
+          >
+            <ClipboardList size={18} />
+            Seguimiento
+          </button>
+          <button
+            onClick={() => setOrgModule("logs")}
+            className={menuClass(orgModule === "logs")}
+          >
+            <FileText size={18} />
+            Horas y evidencias
+          </button>
+          <button
+            onClick={() => setOrgModule("reports")}
+            className={menuClass(orgModule === "reports")}
+          >
+            <FolderOpen size={18} />
+            Reportes
+          </button>
+          <button
+            onClick={() => setOrgModule("materials")}
+            className={menuClass(orgModule === "materials")}
+          >
+            <BookOpen size={18} />
+            Material institucional
+          </button>
+        </div>
+
         <button
-          onClick={() => setOrgModule("dashboard")}
-          className={menuClass(orgModule === "dashboard")}
+          onClick={onLogout}
+          className="mt-auto w-full flex items-center gap-3 text-left px-4 py-3 rounded-2xl text-sm border border-red-200 text-red-700 bg-red-50 hover:bg-red-100 transition"
         >
-          <LayoutDashboard size={18} />
-          Dashboard
-        </button>
-        <button
-          onClick={() => setOrgModule("beneficiaries")}
-          className={menuClass(orgModule === "beneficiaries")}
-        >
-          <GraduationCap size={18} />
-          Beneficiarios
-        </button>
-        <button
-          onClick={() => setOrgModule("tutors")}
-          className={menuClass(orgModule === "tutors")}
-        >
-          <Users size={18} />
-          Tutores
-        </button>
-        <button
-          onClick={() => setOrgModule("assignment")}
-          className={menuClass(orgModule === "assignment")}
-        >
-          <CalendarDays size={18} />
-          Asignaciones
-        </button>
-        <button
-          onClick={() => setOrgModule("tracking")}
-          className={menuClass(orgModule === "tracking")}
-        >
-          <ClipboardList size={18} />
-          Seguimiento
-        </button>
-        <button
-          onClick={() => setOrgModule("logs")}
-          className={menuClass(orgModule === "logs")}
-        >
-          <FileText size={18} />
-          Horas y evidencias
-        </button>
-        <button
-          onClick={() => setOrgModule("reports")}
-          className={menuClass(orgModule === "reports")}
-        >
-          <FolderOpen size={18} />
-          Reportes
-        </button>
-        <button
-          onClick={() => setOrgModule("materials")}
-          className={menuClass(orgModule === "materials")}
-        >
-          <BookOpen size={18} />
-          Material institucional
+          <LogOut size={18} />
+          Cerrar sesión
         </button>
       </aside>
       <main className="flex-1 p-6 space-y-6">{renderContent()}</main>

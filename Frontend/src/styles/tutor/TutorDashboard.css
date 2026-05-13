@@ -1,0 +1,22 @@
+/* Styles for TutorDashboard */
+.quick-action-button {
+  padding: 1rem;
+  border-radius: 1rem;
+  border: 1px solid transparent;
+  background-color: #f8fafc;
+  text-align: left;
+  transition: border-color 0.2s;
+}
+.quick-action-button:hover {
+  border-color: #93c5fd;
+}
+.quick-action-icon {
+  margin-bottom: 0.75rem;
+}
+.quick-action-title {
+  font-weight: 500;
+}
+.quick-action-description {
+  margin-top: 0.25rem;
+  color: #64748b;
+}

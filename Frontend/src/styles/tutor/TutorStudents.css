@@ -1,0 +1,47 @@
+/* Styles for TutorStudents */
+.student-card {
+  padding: 1.25rem;
+  border-radius: 1rem;
+  border: 1px solid #e2e8f0;
+  background-color: white;
+}
+.student-card-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+}
+.student-card-avatar {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 1rem;
+  background-color: #bfdbfe;
+  color: #1d4ed8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+}
+.student-card-status {
+  margin-top: 1rem;
+  display: inline-block;
+  padding: 0.5rem 0.75rem;
+  border-radius: 1rem;
+  background-color: #f1f5f9;
+}
+.student-card-actions {
+  margin-top: 1.25rem;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+}
+.student-card-button {
+  padding: 0.5rem 0.75rem;
+  border-radius: 1rem;
+}
+.student-card-button.primary {
+  background-color: #2563eb;
+  color: white;
+}
+.student-card-button.secondary {
+  background-color: #f1f5f9;
+}

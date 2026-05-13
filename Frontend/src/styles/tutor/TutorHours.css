@@ -1,0 +1,25 @@
+/* Styles for TutorHours */
+.hours-card {
+  padding: 1.25rem;
+  border-radius: 1rem;
+  border: 1px solid #e2e8f0;
+  background-color: white;
+}
+.hours-summary {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+}
+.hours-summary-value {
+  font-weight: 500;
+}
+.hours-chart {
+  height: 18rem;
+  border-radius: 1rem;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+}
