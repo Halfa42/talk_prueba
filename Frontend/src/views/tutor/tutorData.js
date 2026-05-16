@@ -18,9 +18,9 @@ export const tutorStudents = [
 ];
 
 export const upcomingSessions = [
-  ["María López", "10:00 - 11:00"],
-  ["Carlos Vega", "12:00 - 13:00"],
-  ["Fernanda Gil", "16:00 - 17:00"],
+  ["María López", "5/10/2026","10:00 - 11:00"],
+  ["Carlos Vega", "12/10/2026","12:00 - 13:00"],
+  ["Fernanda Gil", "16/10/2026","16:00 - 17:00"],
 ];
 
 export const sessionTabs = [

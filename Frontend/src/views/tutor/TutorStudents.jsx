@@ -1,53 +1,76 @@
-import React from "react";
-import { tutorStudents, buildSelectedStudent } from "./tutorData";
+import React, { useEffect, useState } from "react";
 import "../../styles/tutor/TutorStudents.css";
 
 export default function TutorStudents({ softCard, onOpenStudent }) {
+  const [students, setStudents] = useState([]);
+
+  useEffect(() => {
+    const fetchStudents = async () => {
+      try {
+        const response = await fetch("http://localhost:3000/api/tutor-students?tutorId=1");
+        const data = await response.json();
+        setStudents(data);
+      } catch (error) {
+        console.error("Error fetching students:", error);
+      }
+    };
+
+    fetchStudents();
+  }, []);
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+  {students.map((student) => (
+    <div
+      key={student.id_beneficiario}
+      className={softCard + " p-5"}
+    >
+      <div className="flex items-start justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Mis alumnos</h2>
-          <p className="text-sm text-slate-500">
-            Consulta información general, progreso y accesos rápidos.
-          </p>
+          <div className="font-semibold text-lg">
+            {student.nombre} {student.apellido_paterno}
+          </div>
+
+          <div className="text-sm text-slate-500 mt-1">
+            Nivel: {student.nivel}
+          </div>
+
+          <div className="text-sm text-slate-500">
+            Idioma: {student.idioma}
+          </div>
+
+          <div className="text-sm text-slate-500">
+            Matrícula: {student.matricula_folio}
+          </div>
         </div>
-        <button className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm">
-          Exportar lista
+
+        <div className="w-10 h-10 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center font-semibold">
+          {student.nombre[0]}
+        </div>
+      </div>
+
+      <div className="mt-4">
+        <span
+          className={`px-3 py-1 rounded-full text-xs font-medium ${
+            student.estatus === "activo"
+              ? "bg-green-100 text-green-700"
+              : "bg-red-100 text-red-700"
+          }`}
+        >
+          {student.estatus}
+        </span>
+      </div>
+
+      <div className="mt-5">
+        <button
+          onClick={() => onOpenStudent(student, "registro")}
+          className="w-full px-3 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition"
+        >
+          Ver ficha
         </button>
       </div>
-      <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {tutorStudents.map(([name, level, status]) => (
-          <div key={name} className={softCard + " p-5"}>
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="font-semibold text-lg">{name}</div>
-                <div className="text-sm text-slate-500 mt-1">{level}</div>
-              </div>
-              <div className="w-10 h-10 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center font-semibold">
-                {name[0]}
-              </div>
-            </div>
-            <div className="mt-4 inline-block text-sm px-3 py-2 rounded-xl bg-slate-100">
-              {status}
-            </div>
-            <div className="mt-5 grid grid-cols-2 gap-2 text-sm">
-              <button
-                onClick={() => onOpenStudent(buildSelectedStudent(name, level, status), "registro")}
-                className="px-3 py-2 rounded-xl bg-blue-600 text-white"
-              >
-                Ver ficha
-              </button>
-              <button
-                onClick={() => onOpenStudent(buildSelectedStudent(name, level, status))}
-                className="px-3 py-2 rounded-xl bg-slate-100"
-              >
-                Abrir sesión
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
     </div>
+  ))}
+</div>
   );
 }

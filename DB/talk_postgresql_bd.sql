@@ -103,17 +103,23 @@ CREATE TABLE asignacion (
 
 CREATE TABLE material (
     id_material     INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    id_asignacion   INTEGER NOT NULL,
+    id_asignacion   INTEGER,
     titulo          VARCHAR(150) NOT NULL,
     tema            VARCHAR(100),
     nivel           VARCHAR(50),
+    descripcion     TEXT,
+    archivo_nombre  VARCHAR(255),
+    archivo_tipo    VARCHAR(120),
+    archivo_tamano  INTEGER,
+    archivo_datos   BYTEA,
+    fecha_subida    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     archivo_url     VARCHAR(255),
 
     CONSTRAINT fk_material_asignacion
         FOREIGN KEY (id_asignacion)
         REFERENCES asignacion(id_asignacion)
         ON UPDATE CASCADE
-        ON DELETE CASCADE
+        ON DELETE SET NULL
 );
 
 CREATE TABLE sesion (
@@ -319,5 +325,66 @@ VALUES (
     'revisor',
     'activo'
 );
+
+WITH nuevo_alumno1 AS (
+    INSERT INTO usuario (
+        nombre,
+        apellido_paterno,
+        apellido_materno,
+        correo,
+        contrasena,
+        rol,
+        estatus
+    )
+    VALUES (
+        'Alumno1',
+        'Perez',
+        'Lopez',
+        'alumno1@talk.com',
+        '$2a$12$abc1234567890examplehash',
+        'beneficiario',
+        'activo'
+    )
+    RETURNING id_usuario
+)
+INSERT INTO beneficiario (id_usuario, matricula_folio, nivel, idioma)
+SELECT id_usuario, 'A01270001', 'A2', 'ingles'
+FROM nuevo_alumno1;
+
+WITH nuevo_alumno2 AS (
+    INSERT INTO usuario (
+        nombre,
+        apellido_paterno,
+        apellido_materno,
+        correo,
+        contrasena,
+        rol,
+        estatus
+    )
+    VALUES (
+        'Alumno2',
+        'Garcia',
+        'Martinez',
+        'alumno2@talk.com',
+        '$2a$12$examplehash1234567890abc',
+        'beneficiario',
+        'activo'
+    )
+    RETURNING id_usuario
+)
+INSERT INTO beneficiario (id_usuario, matricula_folio, nivel, idioma)
+SELECT id_usuario, 'A01270002', 'B1', 'ingles'
+FROM nuevo_alumno2;
+
+INSERT INTO asignacion (
+    id_tutor,
+    id_beneficiario,
+    periodo,
+    fecha_inicio,
+    estatus
+)
+VALUES
+(1, 1, '2026-1', CURRENT_DATE, 'activo'),
+(1, 2, '2026-1', CURRENT_DATE, 'activo');
 
 COMMIT;

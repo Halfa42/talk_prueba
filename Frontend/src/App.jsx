@@ -8,8 +8,11 @@ import OrgView from "./views/orgview";
 import StudentView from "./views/studentview";
 
 export default function App() {
+  const currentPath = window.location.pathname;
+  const openTutorMaterialsFromPath = currentPath === "/tutor/TutorMaterials";
+
   // Maneja si vemos el Home/Login ("home") o la plataforma en sí ("app")
-  const [appScreen, setAppScreen] = useState("home");
+  const [appScreen, setAppScreen] = useState(openTutorMaterialsFromPath ? "app" : "home");
   // Rol activo del usuario autenticado
   const [roleView, setRoleView] = useState("tutor");
 
@@ -35,7 +38,12 @@ export default function App() {
         {/* Vista de Plataforma */}
         {appScreen === "app" && (
           <div className="w-full min-h-screen">
-            {roleView === "tutor" && <TutorView onLogout={handleLogout} />}
+            {roleView === "tutor" && (
+              <TutorView
+                onLogout={handleLogout}
+                initialModule={openTutorMaterialsFromPath ? "materials" : "dashboard"}
+              />
+            )}
             {roleView === "org" && <OrgView onLogout={handleLogout} />}
             {roleView === "student" && (
               <StudentView onLogout={handleLogout} />
