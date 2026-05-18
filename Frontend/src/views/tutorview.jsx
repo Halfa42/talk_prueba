@@ -6,12 +6,11 @@ import TutorMaterials from "./tutor/TutorMaterials";
 import TutorTasks from "./tutor/TutorTasks";
 import TutorSession from "./tutor/TutorSession";
 import TutorHours from "./tutor/TutorHours";
-import { initialSelectedStudent } from "./tutor/tutorData";
 
-export default function TutorView({ onLogout }) {
-  const [tutorModule, setTutorModule] = useState("dashboard");
+export default function TutorView({ onLogout, initialModule = "dashboard" }) {
+  const [tutorModule, setTutorModule] = useState(initialModule);
   const [sessionTab, setSessionTab] = useState("registro");
-  const [selectedStudent, setSelectedStudent] = useState(initialSelectedStudent);
+  const [selectedStudent, setSelectedStudent] = useState(null);
 
   const softCard = "bg-white rounded-2xl border border-slate-200 shadow-sm";
   const tabClass = (active) =>
@@ -22,7 +21,17 @@ export default function TutorView({ onLogout }) {
   };
 
   const handleOpenStudent = (student, nextTab) => {
-    setSelectedStudent(student);
+    const mapped = {
+      id_asignacion: student.id_asignacion,
+      name: `${student.nombre} ${student.apellido_paterno}`,
+      level: student.nivel,
+      status: student.estatus,
+      attendance: "N/A",
+      program: student.idioma,
+      diagnostic: student.nivel,
+      current: student.nivel,
+    };
+    setSelectedStudent(mapped);
     setTutorModule("session");
     if (nextTab) {
       setSessionTab(nextTab);
@@ -47,6 +56,23 @@ export default function TutorView({ onLogout }) {
     }
 
     if (tutorModule === "session") {
+      if (!selectedStudent?.id_asignacion) {
+        return (
+          <div className={softCard + " p-6"}>
+            <h3 className="text-lg font-semibold">Selecciona un alumno</h3>
+            <p className="text-sm text-slate-600 mt-2">
+              Para abrir Seguimiento de sesión primero elige un alumno desde el módulo de alumnos.
+            </p>
+            <button
+              onClick={() => setTutorModule("students")}
+              className="mt-4 px-4 py-2 rounded-xl bg-blue-600 text-white text-sm"
+            >
+              Ir a alumnos
+            </button>
+          </div>
+        );
+      }
+
       return (
         <TutorSession
           softCard={softCard}
