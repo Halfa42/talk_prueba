@@ -3,6 +3,7 @@ BEGIN;
 DROP TABLE IF EXISTS entrega CASCADE;
 DROP TABLE IF EXISTS bitacora CASCADE;
 DROP TABLE IF EXISTS tarea CASCADE;
+DROP TABLE IF EXISTS seguimiento_tutor CASCADE;
 DROP TABLE IF EXISTS material CASCADE;
 DROP TABLE IF EXISTS sesion CASCADE;
 DROP TABLE IF EXISTS avance CASCADE;
@@ -102,18 +103,33 @@ CREATE TABLE asignacion (
 );
 
 CREATE TABLE material (
-    id_material     INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    id_asignacion   INTEGER NOT NULL,
-    titulo          VARCHAR(150) NOT NULL,
-    tema            VARCHAR(100),
-    nivel           VARCHAR(50),
-    archivo_url     VARCHAR(255),
+    id_material                INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id_asignacion              INTEGER,
+    titulo                     VARCHAR(200),
+    tema                       VARCHAR(100),
+    nivel                      VARCHAR(50),
+    descripcion                TEXT,
+
+    archivo_nombre             VARCHAR(255),
+    archivo_tipo               VARCHAR(120),
+    archivo_tamano             INTEGER,
+    archivo_datos              BYTEA,
+    archivo_url                VARCHAR(255),
+
+    nombre_archivo_original    VARCHAR(255),
+    nombre_archivo_guardado    VARCHAR(255),
+    ruta_archivo               TEXT,
+    mime_type                  VARCHAR(150),
+    tamano_bytes               INTEGER,
+
+    fecha_subida               TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    fecha_registro             TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT fk_material_asignacion
         FOREIGN KEY (id_asignacion)
         REFERENCES asignacion(id_asignacion)
         ON UPDATE CASCADE
-        ON DELETE CASCADE
+        ON DELETE SET NULL
 );
 
 CREATE TABLE sesion (
@@ -192,7 +208,6 @@ CREATE TABLE tarea (
         CHECK (fecha_limite IS NULL OR fecha_asignacion IS NULL OR fecha_limite >= fecha_asignacion)
 );
 
-
 CREATE TABLE entrega (
     id_entrega            INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     id_tarea              INTEGER NOT NULL,
@@ -212,6 +227,20 @@ CREATE TABLE entrega (
         CHECK (calificacion IS NULL OR calificacion >= 0)
 );
 
+CREATE TABLE seguimiento_tutor (
+    id_seguimiento   INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id_tutor         INTEGER NOT NULL,
+    observacion      TEXT NOT NULL,
+    fecha_registro   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    estatus          VARCHAR(30) NOT NULL DEFAULT 'registrado',
+
+    CONSTRAINT fk_seguimiento_tutor
+        FOREIGN KEY (id_tutor)
+        REFERENCES tutortec(id_tutor)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+);
+
 
 CREATE INDEX idx_tutortec_id_usuario         ON tutortec(id_usuario);
 CREATE INDEX idx_beneficiario_id_usuario     ON beneficiario(id_usuario);
@@ -224,6 +253,7 @@ CREATE INDEX idx_bitacora_id_sesion          ON bitacora(id_sesion);
 CREATE INDEX idx_avance_id_beneficiario      ON avance(id_beneficiario);
 CREATE INDEX idx_tarea_id_asignacion         ON tarea(id_asignacion);
 CREATE INDEX idx_entrega_id_tarea            ON entrega(id_tarea);
+CREATE INDEX idx_seguimiento_id_tutor        ON seguimiento_tutor(id_tutor);
 
 
 WITH nuevo_tutor AS (
@@ -318,6 +348,149 @@ VALUES (
     '$2a$12$x9iWO/XvleFX8WyDSPzJ2OJ9F344UH1bOv2uDAYqwP99mo.zn5H.2',
     'revisor',
     'activo'
+);
+
+
+INSERT INTO asignacion (
+    id_tutor,
+    id_beneficiario,
+    periodo,
+    fecha_inicio,
+    fecha_fin,
+    estatus
+)
+VALUES
+(1, 1, '2026-A', CURRENT_DATE, CURRENT_DATE + INTERVAL '120 days', 'Activa');
+
+
+INSERT INTO avance (
+    id_beneficiario,
+    score_diagnostico,
+    nivel_diagnostico
+)
+VALUES
+(1, 75, 'A1');
+
+
+INSERT INTO seguimiento_tutor (
+    id_tutor,
+    observacion,
+    estatus
+)
+VALUES
+(1, 'Seguimiento inicial del tutor de prueba.', 'registrado');
+
+
+INSERT INTO material (
+    id_asignacion,
+    titulo,
+    tema,
+    nivel,
+    descripcion,
+    archivo_nombre,
+    archivo_tipo,
+    archivo_tamano,
+    archivo_url,
+    nombre_archivo_original,
+    nombre_archivo_guardado,
+    ruta_archivo,
+    mime_type,
+    tamano_bytes
+)
+VALUES
+(
+    1,
+    'Guía institucional de bienvenida',
+    'Introducción',
+    'A1',
+    'Material de ejemplo para validar la carga y consulta de materiales.',
+    'guia_bienvenida.pdf',
+    'application/pdf',
+    102400,
+    '/uploads/materiales/guia_bienvenida.pdf',
+    'guia_bienvenida.pdf',
+    'guia_bienvenida.pdf',
+    '/uploads/materiales/guia_bienvenida.pdf',
+    'application/pdf',
+    102400
+);
+
+
+INSERT INTO sesion (
+    id_asignacion,
+    fecha_sesion,
+    hora_inicio,
+    hora_fin,
+    tema,
+    observaciones,
+    asistencia,
+    horas_registradas
+)
+VALUES
+(
+    1,
+    CURRENT_DATE,
+    '10:00',
+    '11:00',
+    'Presentación del curso',
+    'Sesión de ejemplo para pruebas iniciales.',
+    'asistio',
+    1.00
+);
+
+
+INSERT INTO bitacora (
+    id_sesion,
+    tipo,
+    descripcion,
+    archivo_url
+)
+VALUES
+(
+    1,
+    'registro',
+    'Bitácora inicial de la sesión de prueba.',
+    NULL
+);
+
+
+INSERT INTO tarea (
+    id_asignacion,
+    titulo,
+    descripcion,
+    fecha_asignacion,
+    fecha_limite,
+    archivo_apoyo,
+    estatus
+)
+VALUES
+(
+    1,
+    'Actividad diagnóstica',
+    'Realizar ejercicio básico de diagnóstico.',
+    CURRENT_DATE,
+    CURRENT_DATE + INTERVAL '7 days',
+    '/uploads/tareas/actividad_diagnostica.pdf',
+    'pendiente'
+);
+
+
+INSERT INTO entrega (
+    id_tarea,
+    fecha_entrega,
+    archivo_entregado,
+    comentario_entrega,
+    calificacion,
+    retroalimentacion
+)
+VALUES
+(
+    1,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL
 );
 
 COMMIT;
