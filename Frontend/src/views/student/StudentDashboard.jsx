@@ -5,11 +5,9 @@ export default function StudentDashboard({ softCard }) {
   return (
     <div className="space-y-6">
       <div className="grid md:grid-cols-4 gap-4">
-        {/* Se quitó el hint de Nivel actual */}
         <KpiCard title="Nivel actual" value="A2" hint="" /> 
         <KpiCard title="Tareas pendientes" value="3" hint="1 vence mañana" />
         <KpiCard title="Clases esta semana" value="2" hint="Próxima hoy 12:00" />
-        {/* Se quitó el hint de Asistencia */}
         <KpiCard title="Asistencia" value="92%" hint="" /> 
       </div>
       
@@ -35,7 +33,6 @@ export default function StudentDashboard({ softCard }) {
               ))}
             </div>
           </div>
-          {/* Se eliminó por completo la tarjeta de Recursos Recientes que estaba aquí */}
         </div>
 
         <div className="space-y-6">
@@ -58,7 +55,6 @@ export default function StudentDashboard({ softCard }) {
                 <span>Nivel actual</span>
                 <span>A2</span>
               </div>
-              {/* Se eliminó la fila de Comentarios nuevos que estaba aquí */}
             </div>
           </div>
         </div>

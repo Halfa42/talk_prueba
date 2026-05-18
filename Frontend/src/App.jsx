@@ -2,13 +2,11 @@ import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import "./styles/App.css";
 
-// Vistas modulares
 import HomeLogin from "./views/login";
 import TutorView from "./views/tutorview";
 import OrgView from "./views/orgview";
 import StudentView from "./views/studentview";
 
-// Componente para proteger las rutas
 const RutaProtegida = ({ children, rolPermitido }) => {
   const token = localStorage.getItem("token");
   const rol = localStorage.getItem("rol");

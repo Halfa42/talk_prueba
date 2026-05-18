@@ -1,5 +1,5 @@
 import React from "react";
-import { NavLink, useNavigate } from "react-router-dom"; // Importamos el enrutador
+import { NavLink, useNavigate } from "react-router-dom"; 
 import {
   LayoutDashboard,
   Users,
@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 import "../../styles/tutor/TutorSidebar.css";
 
-// Cambiamos "dashboard" por "" para que sea la ruta principal del tutor (/tutor)
 const sidebarItems = [
   ["", "Dashboard", LayoutDashboard],
   ["beneficiarios", "Mis alumnos", Users],
@@ -24,7 +23,6 @@ const sidebarItems = [
 export default function TutorSidebar() {
   const navigate = useNavigate();
 
-  // Ahora react-router nos dice automáticamente si está activa la pestaña usando { isActive }
   const menuClass = ({ isActive }) =>
     `w-full flex items-center gap-3 text-left px-4 py-3 rounded-2xl text-sm border transition ${isActive ? "bg-blue-600 text-white border-blue-600 font-medium shadow-sm" : "bg-white border-transparent hover:bg-slate-50"}`;
 
@@ -41,7 +39,7 @@ export default function TutorSidebar() {
           <NavLink
             key={label}
             to={`/tutor${key ? `/${key}` : ""}`}
-            end={key === ""} // Esto asegura que "Dashboard" solo se marque en /tutor y no en las subrutas
+            end={key === ""} 
             className={menuClass}
           >
             <Icon size={18} />

@@ -837,7 +837,7 @@ export default function OrgView({ onLogout }) {
   };
 
   return (
-    <div className="flex min-h-[760px] bg-slate-50">
+    <div className="flex min-h-screen w-full bg-slate-50">
       <aside className="w-72 bg-white border-r border-slate-200 p-4 flex flex-col justify-between">
         <div className="space-y-2">
           <button
