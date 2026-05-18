@@ -11,16 +11,13 @@ import TutorHours from "./tutor/TutorHours";
 export default function TutorView() {
   const navigate = useNavigate();
   
-  // Mantenemos tus estados originales para el manejo del estudiante y la sesión
   const [sessionTab, setSessionTab] = useState("registro");
   const [selectedStudent, setSelectedStudent] = useState(null);
 
-  // Tus clases de diseño originales
   const softCard = "bg-white rounded-2xl border border-slate-200 shadow-sm";
   const tabClass = (active) =>
     `px-4 py-2 rounded-xl text-sm border transition ${active ? "bg-blue-600 text-white border-blue-600" : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"}`;
 
-  // En lugar de setTutorModule, navegamos a la URL correspondiente
   const handleModuleChange = (module) => {
     navigate(`/tutor${module === 'dashboard' ? '' : `/${module}`}`);
   };
@@ -30,13 +27,11 @@ export default function TutorView() {
     if (nextTab) {
       setSessionTab(nextTab);
     }
-    // Redirigimos a la pestaña de sesión
     navigate("/tutor/session");
   };
 
   return (
-    <div className="flex min-h-[860px] bg-slate-50">
-      {/* Ya no necesitamos pasarle variables a la Sidebar porque usa sus propias rutas */}
+    <div className="flex min-h-screen w-full bg-slate-50">
       <TutorSidebar />
       <main className="flex-1 p-6 space-y-6">
         <Routes>
@@ -51,7 +46,7 @@ export default function TutorView() {
               sessionTab={sessionTab}
               setSessionTab={setSessionTab}
               selectedStudent={selectedStudent}
-              onBackStudents={() => navigate("/tutor/beneficiarios")} // Volvemos a cambiar el setTutorModule por navigate
+              onBackStudents={() => navigate("/tutor/beneficiarios")} 
             />
           } />
           <Route path="horas" element={<TutorHours softCard={softCard} />} />

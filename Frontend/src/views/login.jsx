@@ -1,21 +1,19 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-// 1. IMPORTANTE: Faltaba importar los iconos de lucide-react
 import { Eye, EyeOff } from "lucide-react"; 
 
 export default function HomeLogin() {
   const navigate = useNavigate();
   
-  // 2. Corregimos los estados para que coincidan con todo el código
   const [correo, setCorreo] = useState("");
   const [contrasena, setContrasena] = useState("");
-  const [error, setError] = useState(""); // Faltaba el estado del error
-  const [showPassword, setShowPassword] = useState(false); // Faltaba el estado para mostrar/ocultar contraseña
+  const [error, setError] = useState(""); 
+  const [showPassword, setShowPassword] = useState(false); 
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
-    setError(""); // Limpiamos errores previos al intentar de nuevo
+    setError(""); 
     try {
       const response = await axios.post("http://localhost:3000/api/auth/login", {
         correo,
@@ -37,7 +35,6 @@ export default function HomeLogin() {
       
     } catch (error) {
       console.error("Error al iniciar sesión", error);
-      // Ahora usamos el estado en lugar de un alert feo
       setError("Usuario o contraseña incorrectos"); 
     }
   };
@@ -63,7 +60,6 @@ export default function HomeLogin() {
       <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm p-10 h-full flex flex-col justify-center">
         <h2 className="text-3xl font-bold mb-2">Iniciar sesión</h2>
         
-        {/* Aquí se muestra el mensaje de error si existe */}
         {error && <p className="text-red-500 mb-4">{error}</p>}
         
         <div className="space-y-4">
@@ -71,16 +67,16 @@ export default function HomeLogin() {
             className="w-full rounded-2xl border border-slate-300 px-4 py-3"
             placeholder="Correo electrónico"
             type="email"
-            value={correo} // Estaba como "email"
-            onChange={(e) => setCorreo(e.target.value)} // Estaba como "setEmail"
+            value={correo} 
+            onChange={(e) => setCorreo(e.target.value)} 
           />
           <div className="relative">
             <input
               className="w-full rounded-2xl border border-slate-300 px-4 py-3 pr-12"
               placeholder="Contraseña"
               type={showPassword ? 'text' : 'password'}
-              value={contrasena} // Estaba como "password"
-              onChange={(e) => setContrasena(e.target.value)} // Estaba como "setPassword"
+              value={contrasena} 
+              onChange={(e) => setContrasena(e.target.value)} 
             />
             <button
               type="button"
@@ -92,7 +88,7 @@ export default function HomeLogin() {
             </button>
           </div>
           <button
-            onClick={handleLoginSubmit} // Estaba llamando a un "handleLogin" que no existía
+            onClick={handleLoginSubmit} 
             className="w-full rounded-2xl bg-blue-600 text-white py-3 mt-4 font-medium hover:bg-blue-700 transition"
           >
             Entrar a la plataforma
