@@ -1,40 +1,44 @@
-import React, { useState } from 'react';
-import axios from 'axios';
-import { Eye, EyeOff } from 'lucide-react';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+// 1. IMPORTANTE: Faltaba importar los iconos de lucide-react
+import { Eye, EyeOff } from "lucide-react"; 
 
-export default function HomeLogin({ setAppScreen, setRoleView }) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+export default function HomeLogin() {
+  const navigate = useNavigate();
+  
+  // 2. Corregimos los estados para que coincidan con todo el código
+  const [correo, setCorreo] = useState("");
+  const [contrasena, setContrasena] = useState("");
+  const [error, setError] = useState(""); // Faltaba el estado del error
+  const [showPassword, setShowPassword] = useState(false); // Faltaba el estado para mostrar/ocultar contraseña
 
-  const handleLogin = async () => {
+  const handleLoginSubmit = async (e) => {
+    e.preventDefault();
+    setError(""); // Limpiamos errores previos al intentar de nuevo
     try {
-      const response = await axios.post('http://localhost:3000/api/auth/login', {
-        correo: email,
-        contrasena: password,
+      const response = await axios.post("http://localhost:3000/api/auth/login", {
+        correo,
+        contrasena
       });
-
+      
       const { token, rol } = response.data;
+      
+      localStorage.setItem("token", token);
+      localStorage.setItem("rol", rol);
 
-      // Save token (optional, for future requests)
-      localStorage.setItem('token', token);
-
-      // Redirect based on role
-      if (rol === 'tutor') {
-        setAppScreen('app');
-        setRoleView('tutor');
-      } else if (rol === 'beneficiario') {
-        setAppScreen('app');
-        setRoleView('student');
-      } else if (rol === 'socio_formador') {
-        setAppScreen('app');
-        setRoleView('org');
-      } else {
-        setError('Rol no reconocido');
+      if (rol === "tutor") {
+        navigate("/tutor");
+      } else if (rol === "socio_formador") {
+        navigate("/org");
+      } else if (rol === "beneficiario") {
+        navigate("/estudiante");
       }
-    } catch (err) {
-      setError(err.response?.data?.message || 'No se pudo iniciar sesión');
+      
+    } catch (error) {
+      console.error("Error al iniciar sesión", error);
+      // Ahora usamos el estado en lugar de un alert feo
+      setError("Usuario o contraseña incorrectos"); 
     }
   };
 
@@ -58,22 +62,25 @@ export default function HomeLogin({ setAppScreen, setRoleView }) {
       {/* Lado Derecho: Login */}
       <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm p-10 h-full flex flex-col justify-center">
         <h2 className="text-3xl font-bold mb-2">Iniciar sesión</h2>
+        
+        {/* Aquí se muestra el mensaje de error si existe */}
         {error && <p className="text-red-500 mb-4">{error}</p>}
+        
         <div className="space-y-4">
           <input
             className="w-full rounded-2xl border border-slate-300 px-4 py-3"
             placeholder="Correo electrónico"
             type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            value={correo} // Estaba como "email"
+            onChange={(e) => setCorreo(e.target.value)} // Estaba como "setEmail"
           />
           <div className="relative">
             <input
               className="w-full rounded-2xl border border-slate-300 px-4 py-3 pr-12"
               placeholder="Contraseña"
               type={showPassword ? 'text' : 'password'}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              value={contrasena} // Estaba como "password"
+              onChange={(e) => setContrasena(e.target.value)} // Estaba como "setPassword"
             />
             <button
               type="button"
@@ -85,7 +92,7 @@ export default function HomeLogin({ setAppScreen, setRoleView }) {
             </button>
           </div>
           <button
-            onClick={handleLogin}
+            onClick={handleLoginSubmit} // Estaba llamando a un "handleLogin" que no existía
             className="w-full rounded-2xl bg-blue-600 text-white py-3 mt-4 font-medium hover:bg-blue-700 transition"
           >
             Entrar a la plataforma

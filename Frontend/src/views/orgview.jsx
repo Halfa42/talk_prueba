@@ -201,10 +201,10 @@ export default function OrgView({ onLogout }) {
       await loadAllData();
       setShowBeneficiaryModal(false);
       resetBeneficiaryForm();
-      setStatusMessage("✅ Beneficiario agregado correctamente.");
+      setStatusMessage("Beneficiario agregado correctamente.");
     } catch (error) {
       setStatusMessage(
-        `❌ ${error.response?.data?.message || "No se pudo agregar el beneficiario."}`
+        `${error.response?.data?.message || "No se pudo agregar el beneficiario."}`
       );
     }
   };
@@ -1109,23 +1109,33 @@ export default function OrgView({ onLogout }) {
               </div>
             </div>
 
-            <div className="flex gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowBeneficiaryModal(false);
-                  resetBeneficiaryForm();
-                }}
-                className="px-4 py-2 rounded-xl bg-slate-100"
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 rounded-xl bg-blue-600 text-white"
-              >
-                Guardar beneficiario
-              </button>
+            <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+              <div className="flex-1 pr-4">
+                {statusMessage && (
+                  <span className="text-sm font-medium text-red-600 block">
+                    {statusMessage}
+                  </span>
+                )}
+              </div>
+              
+              <div className="flex gap-3 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowBeneficiaryModal(false);
+                    resetBeneficiaryForm();
+                  }}
+                  className="px-4 py-2 rounded-xl bg-slate-100"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-xl bg-blue-600 text-white"
+                >
+                  Guardar beneficiario
+                </button>
+              </div>
             </div>
           </form>
         </ModalWrapper>
