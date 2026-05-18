@@ -7,14 +7,13 @@ import TutorMaterials from "./tutor/TutorMaterials";
 import TutorTasks from "./tutor/TutorTasks";
 import TutorSession from "./tutor/TutorSession";
 import TutorHours from "./tutor/TutorHours";
-import { initialSelectedStudent } from "./tutor/tutorData";
 
 export default function TutorView() {
   const navigate = useNavigate();
   
   // Mantenemos tus estados originales para el manejo del estudiante y la sesión
   const [sessionTab, setSessionTab] = useState("registro");
-  const [selectedStudent, setSelectedStudent] = useState(initialSelectedStudent);
+  const [selectedStudent, setSelectedStudent] = useState(null);
 
   // Tus clases de diseño originales
   const softCard = "bg-white rounded-2xl border border-slate-200 shadow-sm";
