@@ -3,7 +3,7 @@ const { query } = require('../Database/index');
 const uploadMaterial = async (req, res) => {
   try {
     const { titulo, tema, nivel, descripcion, id_asignacion } = req.body;
-    const idAsignacion = Number(id_asignacion);
+    const idAsignacion = id_asignacion ? Number(id_asignacion) : null;
     const file = req.file;
     const allowedMimeTypes = [
       'application/pdf',
@@ -17,9 +17,9 @@ const uploadMaterial = async (req, res) => {
       });
     }
 
-    if (!Number.isInteger(idAsignacion) || idAsignacion <= 0) {
+    if (idAsignacion !== null && (!Number.isInteger(idAsignacion) || idAsignacion <= 0)) {
       return res.status(400).json({
-        message: 'id_asignacion es requerido y debe ser valido',
+        message: 'id_asignacion debe ser valido si se proporciona',
       });
     }
 

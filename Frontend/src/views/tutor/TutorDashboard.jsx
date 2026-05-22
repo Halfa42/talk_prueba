@@ -12,7 +12,13 @@ const quickActions = [
 
 export default function TutorDashboard({ softCard, onModuleChange }) {
   const tutorId = 1;
-  const [summary, setSummary] = useState({ tareas_por_revisar: 0, horas_acumuladas: 0 });
+  const [showZoomModal, setShowZoomModal] = useState(false);
+  const [zoomLink, setZoomLink] = useState("");
+  const [zoomMsg, setZoomMsg] = useState(null);
+  const [summary, setSummary] = useState({
+    tareas_por_revisar: 0,
+    horas_acumuladas: 0,
+  });
   const [calendarRows, setCalendarRows] = useState([]);
   const [students, setStudents] = useState([]);
   const [showAddSession, setShowAddSession] = useState(false);
@@ -22,6 +28,7 @@ export default function TutorDashboard({ softCard, onModuleChange }) {
     hora_inicio: "",
     hora_fin: "",
   });
+  const [horaFinTouched, setHoraFinTouched] = useState(false);
   const [calendarMsg, setCalendarMsg] = useState(null);
   const [deletingSessionId, setDeletingSessionId] = useState(null);
 
@@ -34,6 +41,16 @@ export default function TutorDashboard({ softCard, onModuleChange }) {
     const suffix = hours >= 12 ? "PM" : "AM";
     const hours12 = hours % 12 === 0 ? 12 : hours % 12;
     return `${hours12}:${minutes} ${suffix}`;
+  };
+
+  const addOneHour = (time) => {
+    if (!time) return "";
+    const [h, m] = time.split(":").map(Number);
+    const date = new Date();
+    date.setHours(h);
+    date.setMinutes(m);
+    date.setHours(date.getHours() + 1);
+    return date.toTimeString().slice(0, 5);
   };
 
   const loadDashboardData = async () => {
@@ -58,40 +75,114 @@ export default function TutorDashboard({ softCard, onModuleChange }) {
 
   useEffect(() => {
     loadDashboardData();
+    loadZoomLink();
   }, []);
 
+  const loadZoomLink = async () => {
+    try {
+      const res = await fetch(`http://localhost:3000/api/zoom-link/${tutorId}`);
+
+      const data = await res.json();
+
+      setZoomLink(data?.zoom_link || "");
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  const saveZoomLink = async () => {
+    try {
+      const res = await fetch("http://localhost:3000/api/zoom-link", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id_tutor: tutorId,
+          zoom_link: zoomLink,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.message);
+
+      setZoomMsg({
+        tipo: "ok",
+        texto: "Liga Zoom guardada.",
+      });
+    } catch (error) {
+      setZoomMsg({
+        tipo: "error",
+        texto: error.message,
+      });
+    }
+  };
+
   const handleSessionInputChange = (e) => {
-    setNewSession((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+
+    if (name === "hora_fin") {
+      setHoraFinTouched(true);
+    }
+
+    setNewSession((prev) => {
+      const updated = { ...prev, [name]: value };
+      if (name === "hora_inicio" && !horaFinTouched) {
+        updated.hora_fin = addOneHour(value);
+      }
+      return updated;
+    });
   };
 
   const handleAddSession = async () => {
     setCalendarMsg(null);
-    if (!newSession.id_asignacion || newSession.dia_semana === "" || !newSession.hora_inicio || !newSession.hora_fin) {
-      setCalendarMsg({ tipo: "error", texto: "Completa alumno, día y horario." });
+    if (
+      !newSession.id_asignacion ||
+      newSession.dia_semana === "" ||
+      !newSession.hora_inicio ||
+      !newSession.hora_fin
+    ) {
+      setCalendarMsg({
+        tipo: "error",
+        texto: "Completa alumno, día y horario.",
+      });
       return;
     }
 
     if (newSession.hora_fin <= newSession.hora_inicio) {
-      setCalendarMsg({ tipo: "error", texto: "La hora fin debe ser mayor que la hora inicio." });
+      setCalendarMsg({
+        tipo: "error",
+        texto: "La hora fin debe ser mayor que la hora inicio.",
+      });
       return;
     }
 
     try {
-      const response = await fetch(`http://localhost:3000/api/dashboard/${tutorId}/calendario`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id_asignacion: Number(newSession.id_asignacion),
-          dia_semana: Number(newSession.dia_semana),
-          hora_inicio: newSession.hora_inicio,
-          hora_fin: newSession.hora_fin,
-        }),
-      });
+      const response = await fetch(
+        `http://localhost:3000/api/dashboard/${tutorId}/calendario`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id_asignacion: Number(newSession.id_asignacion),
+            dia_semana: Number(newSession.dia_semana),
+            hora_inicio: newSession.hora_inicio,
+            hora_fin: newSession.hora_fin,
+          }),
+        },
+      );
       const data = await response.json();
-      if (!response.ok) throw new Error(data.message || "No se pudo agregar la sesión");
+      if (!response.ok)
+        throw new Error(data.message || "No se pudo agregar la sesión");
 
       setCalendarMsg({ tipo: "ok", texto: "Sesión agregada al calendario." });
-      setNewSession({ id_asignacion: "", dia_semana: "", hora_inicio: "", hora_fin: "" });
+      setNewSession({
+        id_asignacion: "",
+        dia_semana: "",
+        hora_inicio: "",
+        hora_fin: "",
+      });
+      setHoraFinTouched(false);
       await loadDashboardData();
     } catch (error) {
       setCalendarMsg({ tipo: "error", texto: error.message });
@@ -99,17 +190,23 @@ export default function TutorDashboard({ softCard, onModuleChange }) {
   };
 
   const handleDeleteSession = async (sessionId) => {
-    const confirmed = window.confirm("¿Seguro que deseas eliminar esta sesión del calendario?");
+    const confirmed = window.confirm(
+      "¿Seguro que deseas eliminar esta sesión del calendario?",
+    );
     if (!confirmed) return;
 
     try {
       setDeletingSessionId(sessionId);
       setCalendarMsg(null);
-      const response = await fetch(`http://localhost:3000/api/dashboard/${tutorId}/calendario/${sessionId}`, {
-        method: "DELETE",
-      });
+      const response = await fetch(
+        `http://localhost:3000/api/dashboard/${tutorId}/calendario/${sessionId}`,
+        {
+          method: "DELETE",
+        },
+      );
       const data = await response.json();
-      if (!response.ok) throw new Error(data.message || "No se pudo eliminar la sesión");
+      if (!response.ok)
+        throw new Error(data.message || "No se pudo eliminar la sesión");
 
       setCalendarMsg({ tipo: "ok", texto: "Sesión eliminada correctamente." });
       await loadDashboardData();
@@ -123,8 +220,14 @@ export default function TutorDashboard({ softCard, onModuleChange }) {
   return (
     <div className="space-y-6">
       <div className="grid md:grid-cols-2 gap-2">
-        <KpiCard title="Tareas por revisar" value={String(summary.tareas_por_revisar ?? 0)} />
-        <KpiCard title="Horas acumuladas" value={`${summary.horas_acumuladas ?? 0} h`} />
+        <KpiCard
+          title="Tareas por revisar"
+          value={String(summary.tareas_por_revisar ?? 0)}
+        />
+        <KpiCard
+          title="Horas acumuladas"
+          value={`${summary.horas_acumuladas ?? 0} h`}
+        />
       </div>
       <div className="grid xl:grid-cols-3 gap-6">
         <div className="xl:col-span-2 space-y-6">
@@ -150,6 +253,14 @@ export default function TutorDashboard({ softCard, onModuleChange }) {
                 </button>
               ))}
             </div>
+            <div className="mt-4">
+              <button
+                onClick={() => setShowZoomModal(true)}
+                className="px-4 py-2 rounded-xl bg-blue-600 text-white"
+              >
+                Configurar Zoom
+              </button>
+            </div>
           </div>
           <div className={softCard + " p-5"}>
             <div className="flex items-center justify-between mb-4">
@@ -171,7 +282,10 @@ export default function TutorDashboard({ softCard, onModuleChange }) {
                 >
                   <option value="">Alumno</option>
                   {students.map((student) => (
-                    <option key={student.id_asignacion} value={student.id_asignacion}>
+                    <option
+                      key={student.id_asignacion}
+                      value={student.id_asignacion}
+                    >
                       {student.nombre} {student.apellido_paterno}
                     </option>
                   ))}
@@ -213,7 +327,9 @@ export default function TutorDashboard({ softCard, onModuleChange }) {
                     Guardar sesión
                   </button>
                   {calendarMsg && (
-                    <p className={`mt-2 text-sm ${calendarMsg.tipo === "ok" ? "text-green-600" : "text-red-600"}`}>
+                    <p
+                      className={`mt-2 text-sm ${calendarMsg.tipo === "ok" ? "text-green-600" : "text-red-600"}`}
+                    >
                       {calendarMsg.texto}
                     </p>
                   )}
@@ -232,22 +348,32 @@ export default function TutorDashboard({ softCard, onModuleChange }) {
                 <tbody>
                   {calendarRows.length === 0 ? (
                     <tr className="border-t border-slate-200 bg-white">
-                      <td className="p-3 text-slate-400" colSpan={3}>Sin sesiones programadas</td>
+                      <td className="p-3 text-slate-400" colSpan={3}>
+                        Sin sesiones programadas
+                      </td>
                     </tr>
                   ) : (
                     calendarRows.map((row) => (
-                      <tr key={row.id_sesion} className="border-t border-slate-200 bg-white">
+                      <tr
+                        key={row.id_sesion}
+                        className="border-t border-slate-200 bg-white"
+                      >
                         <td className="p-3">{row.alumno}</td>
                         <td className="p-3">{row.dia}</td>
                         <td className="p-3">
                           <div className="flex items-center justify-between gap-3">
-                            <span>{formatTimeAmPm(row.hora_inicio)} - {formatTimeAmPm(row.hora_fin)}</span>
+                            <span>
+                              {formatTimeAmPm(row.hora_inicio)} -{" "}
+                              {formatTimeAmPm(row.hora_fin)}
+                            </span>
                             <button
                               onClick={() => handleDeleteSession(row.id_sesion)}
                               disabled={deletingSessionId === row.id_sesion}
                               className="px-3 py-2 rounded-xl bg-red-100 text-red-700 border border-red-200 hover:bg-red-200 transition text-xs"
                             >
-                              {deletingSessionId === row.id_sesion ? "Eliminando..." : "Eliminar"}
+                              {deletingSessionId === row.id_sesion
+                                ? "Eliminando..."
+                                : "Eliminar"}
                             </button>
                           </div>
                         </td>
@@ -260,6 +386,46 @@ export default function TutorDashboard({ softCard, onModuleChange }) {
           </div>
         </div>
       </div>
+      {showZoomModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-2xl w-[500px]">
+            <h3 className="font-semibold text-lg mb-4">Configurar Zoom</h3>
+
+            <input
+              className="w-full border rounded-xl px-4 py-3"
+              value={zoomLink}
+              onChange={(e) => setZoomLink(e.target.value)}
+              placeholder="https://zoom.us/j/..."
+            />
+
+            {zoomMsg && (
+              <p
+                className={`mt-2 ${
+                  zoomMsg.tipo === "ok" ? "text-green-600" : "text-red-600"
+                }`}
+              >
+                {zoomMsg.texto}
+              </p>
+            )}
+
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                onClick={() => setShowZoomModal(false)}
+                className="px-4 py-2 border rounded-xl"
+              >
+                Cancelar
+              </button>
+
+              <button
+                onClick={saveZoomLink}
+                className="px-4 py-2 bg-blue-600 text-white rounded-xl"
+              >
+                Guardar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

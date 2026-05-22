@@ -387,4 +387,31 @@ VALUES
 (1, 1, '2026-1', CURRENT_DATE, 'activo'),
 (1, 2, '2026-1', CURRENT_DATE, 'activo');
 
+CREATE TABLE tutor_zoom_link (
+    id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id_tutor INTEGER NOT NULL UNIQUE,
+    zoom_link TEXT NOT NULL,
+
+    CONSTRAINT fk_zoom_tutor
+    FOREIGN KEY (id_tutor)
+    REFERENCES tutortec(id_tutor)
+    ON DELETE CASCADE
+);
+
+ALTER TABLE sesion ADD COLUMN aprobado_padre_madre BOOLEAN;
+
+ALTER TABLE bitacora
+  ADD COLUMN hora            TIME,
+  ADD COLUMN tema            VARCHAR(150),
+  ADD COLUMN planeacion_siguiente_sesion TEXT,
+  ADD COLUMN tareas_asignadas            TEXT,
+  ADD COLUMN imagen_recordatorio         BYTEA,
+  ADD COLUMN imagen_recordatorio_tipo    VARCHAR(120),
+  ADD COLUMN imagen_sesion               BYTEA,
+  ADD COLUMN imagen_sesion_tipo          VARCHAR(120);
+  
+  ALTER TABLE bitacora
+  ADD COLUMN imagen_incidencia      BYTEA,
+  ADD COLUMN imagen_incidencia_tipo VARCHAR(120);
+  
 COMMIT;
