@@ -58,7 +58,11 @@ export default function HomeLogin({ setAppScreen, setRoleView }) {
       {/* Lado Derecho: Login */}
       <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm p-10 h-full flex flex-col justify-center">
         <h2 className="text-3xl font-bold mb-2">Iniciar sesión</h2>
-        {error && <p className="text-red-500 mb-4">{error}</p>}
+        {error && (
+          <p data-cy="login-error" className="text-red-500 mb-4">
+            {error}
+          </p>
+        )}
         <div className="space-y-4">
           <input
             className="w-full rounded-2xl border border-slate-300 px-4 py-3"

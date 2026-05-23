@@ -17,6 +17,13 @@ function normalizeStatus(value) {
   return "no activo";
 }
 
+function normalizeCourseLanguage(value) {
+  const v = clean(value).toLowerCase();
+  if (v === "ingles") return "ingles";
+  if (v === "frances") return "frances";
+  return "";
+}
+
 function csvEscape(value) {
   const text = String(value ?? "");
   if (text.includes(",") || text.includes('"') || text.includes("\n")) {
@@ -74,6 +81,7 @@ router.get("/beneficiarios", async (req, res) => {
         ultima_asignacion.periodo,
         ultima_asignacion.fecha_inicio,
         ultima_asignacion.fecha_fin,
+        ultima_asignacion.idioma AS idioma_asignacion,
         COALESCE(
           CONCAT(ut.nombre, ' ', ut.apellido_paterno),
           'Sin asignar'
@@ -87,7 +95,8 @@ router.get("/beneficiarios", async (req, res) => {
           a.id_tutor,
           a.periodo,
           a.fecha_inicio,
-          a.fecha_fin
+          a.fecha_fin,
+          a.idioma
         FROM asignacion a
         WHERE a.id_beneficiario = b.id_beneficiario
         ORDER BY a.id_asignacion DESC
@@ -206,6 +215,7 @@ router.get("/asignaciones", async (req, res) => {
         a.fecha_inicio,
         a.fecha_fin,
         a.estatus,
+        a.idioma,
         b.id_beneficiario,
         tt.id_tutor,
         CONCAT(ub.nombre, ' ', ub.apellido_paterno) AS beneficiario,
@@ -240,14 +250,16 @@ router.post("/asignaciones", async (req, res) => {
       fecha_inicio,
       fecha_fin,
       estatus,
+      idioma,
     } = req.body;
 
     const tutorIdNumero = Number(tutorId);
     const beneficiarioIdNumero = Number(beneficiarioId);
+    const idiomaNormalizado = normalizeCourseLanguage(idioma);
 
-    if (!tutorIdNumero || !beneficiarioIdNumero) {
+    if (!tutorIdNumero || !beneficiarioIdNumero || !idiomaNormalizado) {
       return res.status(400).json({
-        message: "Selecciona un tutor y un beneficiario.",
+        message: "Selecciona tutor, beneficiario e idioma.",
       });
     }
 
@@ -259,9 +271,10 @@ router.post("/asignaciones", async (req, res) => {
         periodo,
         fecha_inicio,
         fecha_fin,
-        estatus
+        estatus,
+        idioma
       )
-      VALUES ($1, $2, $3, $4, $5, $6)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
       `,
       [
         tutorIdNumero,
@@ -270,6 +283,7 @@ router.post("/asignaciones", async (req, res) => {
         fecha_inicio || null,
         fecha_fin || null,
         clean(estatus) || "Activa",
+        idiomaNormalizado,
       ]
     );
 
@@ -281,11 +295,89 @@ router.post("/asignaciones", async (req, res) => {
 
     if (error.code === "23505") {
       return res.status(409).json({
-        message: "Esa asignación ya existe para el periodo seleccionado.",
+        message:
+          "Ese tutor ya tiene asignado a ese beneficiario para ese mismo idioma.",
       });
     }
 
     res.status(500).json({ message: "Error al crear asignación." });
+  }
+});
+
+router.put("/asignaciones/:id", async (req, res) => {
+  try {
+    const idAsignacion = Number(req.params.id);
+    const {
+      tutorId,
+      beneficiarioId,
+      periodo,
+      fecha_inicio,
+      fecha_fin,
+      estatus,
+      idioma,
+    } = req.body;
+
+    const tutorIdNumero = Number(tutorId);
+    const beneficiarioIdNumero = Number(beneficiarioId);
+    const idiomaNormalizado = normalizeCourseLanguage(idioma);
+
+    if (
+      !idAsignacion ||
+      !tutorIdNumero ||
+      !beneficiarioIdNumero ||
+      !idiomaNormalizado
+    ) {
+      return res.status(400).json({
+        message: "Completa los datos obligatorios de la asignación.",
+      });
+    }
+
+    const existente = await query(
+      `SELECT id_asignacion FROM asignacion WHERE id_asignacion = $1 LIMIT 1`,
+      [idAsignacion]
+    );
+
+    if (existente.rows.length === 0) {
+      return res.status(404).json({ message: "Asignación no encontrada." });
+    }
+
+    await query(
+      `
+      UPDATE asignacion
+      SET
+        id_tutor = $1,
+        id_beneficiario = $2,
+        periodo = $3,
+        fecha_inicio = $4,
+        fecha_fin = $5,
+        estatus = $6,
+        idioma = $7
+      WHERE id_asignacion = $8
+      `,
+      [
+        tutorIdNumero,
+        beneficiarioIdNumero,
+        clean(periodo) || "2026-A",
+        fecha_inicio || null,
+        fecha_fin || null,
+        clean(estatus) || "Activa",
+        idiomaNormalizado,
+        idAsignacion,
+      ]
+    );
+
+    res.json({ message: "Asignación actualizada correctamente." });
+  } catch (error) {
+    console.error("Error al actualizar asignación:", error);
+
+    if (error.code === "23505") {
+      return res.status(409).json({
+        message:
+          "Ese tutor ya tiene asignado a ese beneficiario para ese mismo idioma.",
+      });
+    }
+
+    res.status(500).json({ message: "Error al actualizar asignación." });
   }
 });
 
@@ -374,6 +466,147 @@ router.post("/seguimiento", async (req, res) => {
   }
 });
 
+router.get("/horas-evidencias", async (req, res) => {
+  try {
+    const result = await query(
+      `
+      SELECT
+        he.id_registro,
+        he.id_tutor,
+        he.horas,
+        he.sesiones,
+        he.estado,
+        he.fecha_registro,
+        CONCAT(u.nombre, ' ', u.apellido_paterno) AS tutor
+      FROM horas_evidencias he
+      INNER JOIN tutortec tt
+        ON tt.id_tutor = he.id_tutor
+      INNER JOIN usuario u
+        ON u.id_usuario = tt.id_usuario
+      ORDER BY he.id_registro DESC
+      `
+    );
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Error al consultar horas y evidencias:", error);
+    res.status(500).json({ message: "Error al consultar horas y evidencias." });
+  }
+});
+
+router.post("/horas-evidencias", async (req, res) => {
+  try {
+    const { tutorId, horas, sesiones, estado } = req.body;
+
+    const tutorIdNumero = Number(tutorId);
+    const horasNumero = Number(horas);
+    const sesionesNumero = Number(sesiones);
+
+    if (!tutorIdNumero || Number.isNaN(horasNumero) || Number.isNaN(sesionesNumero)) {
+      return res.status(400).json({
+        message: "Completa los datos obligatorios del registro.",
+      });
+    }
+
+    await query(
+      `
+      INSERT INTO horas_evidencias (
+        id_tutor,
+        horas,
+        sesiones,
+        estado
+      )
+      VALUES ($1, $2, $3, $4)
+      `,
+      [
+        tutorIdNumero,
+        horasNumero,
+        sesionesNumero,
+        clean(estado) || "Pendiente",
+      ]
+    );
+
+    res.status(201).json({ message: "Registro creado correctamente." });
+  } catch (error) {
+    console.error("Error al crear registro de horas y evidencias:", error);
+    res.status(500).json({ message: "Error al crear el registro." });
+  }
+});
+
+router.put("/horas-evidencias/:id", async (req, res) => {
+  try {
+    const idRegistro = Number(req.params.id);
+    const { tutorId, horas, sesiones, estado } = req.body;
+
+    const tutorIdNumero = Number(tutorId);
+    const horasNumero = Number(horas);
+    const sesionesNumero = Number(sesiones);
+
+    if (!idRegistro || !tutorIdNumero || Number.isNaN(horasNumero) || Number.isNaN(sesionesNumero)) {
+      return res.status(400).json({
+        message: "Completa los datos obligatorios del registro.",
+      });
+    }
+
+    const existente = await query(
+      `SELECT id_registro FROM horas_evidencias WHERE id_registro = $1 LIMIT 1`,
+      [idRegistro]
+    );
+
+    if (existente.rows.length === 0) {
+      return res.status(404).json({ message: "Registro no encontrado." });
+    }
+
+    await query(
+      `
+      UPDATE horas_evidencias
+      SET
+        id_tutor = $1,
+        horas = $2,
+        sesiones = $3,
+        estado = $4
+      WHERE id_registro = $5
+      `,
+      [
+        tutorIdNumero,
+        horasNumero,
+        sesionesNumero,
+        clean(estado) || "Pendiente",
+        idRegistro,
+      ]
+    );
+
+    res.json({ message: "Registro actualizado correctamente." });
+  } catch (error) {
+    console.error("Error al actualizar horas y evidencias:", error);
+    res.status(500).json({ message: "Error al actualizar el registro." });
+  }
+});
+
+router.delete("/horas-evidencias/:id", async (req, res) => {
+  try {
+    const idRegistro = Number(req.params.id);
+
+    if (!idRegistro) {
+      return res.status(400).json({ message: "ID inválido." });
+    }
+
+    const result = await query(
+      `DELETE FROM horas_evidencias WHERE id_registro = $1 RETURNING id_registro`,
+      [idRegistro]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Registro no encontrado." });
+    }
+
+    res.json({ message: "Registro eliminado correctamente." });
+  } catch (error) {
+    console.error("Error al eliminar horas y evidencias:", error);
+    res.status(500).json({ message: "Error al eliminar el registro." });
+  }
+});
+
 router.get("/materiales", async (req, res) => {
   try {
     const result = await query(
@@ -388,7 +621,7 @@ router.get("/materiales", async (req, res) => {
         mime_type,
         tamano_bytes,
         fecha_registro
-      FROM material_institucional
+      FROM material
       ORDER BY fecha_registro DESC, id_material DESC
       `
     );
@@ -416,16 +649,20 @@ router.post("/materiales", upload.single("archivo"), async (req, res) => {
 
     const result = await query(
       `
-      INSERT INTO material_institucional (
+      INSERT INTO material (
         titulo,
         descripcion,
         nombre_archivo_original,
         nombre_archivo_guardado,
         ruta_archivo,
         mime_type,
-        tamano_bytes
+        tamano_bytes,
+        archivo_nombre,
+        archivo_tipo,
+        archivo_tamano,
+        archivo_url
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
       RETURNING id_material
       `,
       [
@@ -436,18 +673,16 @@ router.post("/materiales", upload.single("archivo"), async (req, res) => {
         rutaRelativa,
         archivo.mimetype || null,
         archivo.size || null,
+        archivo.originalname,
+        archivo.mimetype || null,
+        archivo.size || null,
+        rutaRelativa,
       ]
     );
 
     res.status(201).json({
       message: "Material guardado correctamente.",
       id_material: result.rows[0].id_material,
-      material: {
-        titulo,
-        descripcion,
-        nombre_archivo_original: archivo.originalname,
-        ruta_archivo: rutaRelativa,
-      },
     });
   } catch (error) {
     console.error("Error al guardar material:", error);
@@ -471,6 +706,7 @@ router.get("/reportes/beneficiarios", async (req, res) => {
         b.idioma,
         COALESCE(CONCAT(ut.nombre, ' ', ut.apellido_paterno), 'Sin asignar') AS tutor_asignado,
         COALESCE(a.periodo, 'Sin periodo') AS periodo,
+        COALESCE(a.idioma, 'Sin idioma') AS idioma_asignacion,
         a.fecha_inicio,
         a.fecha_fin
       FROM beneficiario b
@@ -501,9 +737,10 @@ router.get("/reportes/beneficiarios", async (req, res) => {
       "Estado",
       "Nivel",
       "Matricula/Folio",
-      "Idioma",
+      "Idioma perfil",
       "Tutor asignado",
       "Periodo",
+      "Idioma asignacion",
       "Fecha inicio",
       "Fecha fin",
     ];
@@ -520,6 +757,7 @@ router.get("/reportes/beneficiarios", async (req, res) => {
       row.idioma || "",
       row.tutor_asignado,
       row.periodo,
+      row.idioma_asignacion,
       row.fecha_inicio ? String(row.fecha_inicio).slice(0, 10) : "",
       row.fecha_fin ? String(row.fecha_fin).slice(0, 10) : "",
     ]);
@@ -570,7 +808,7 @@ router.get("/reportes/tutores", async (req, res) => {
       "Apellido materno",
       "Correo",
       "Estado",
-      "Idioma",
+      "Idioma perfil",
       "Beneficiarios asignados",
       "Horas acumuladas",
     ];
@@ -629,7 +867,7 @@ router.get("/reportes/horas", async (req, res) => {
       "Tutor",
       "Correo",
       "Estado",
-      "Idioma",
+      "Idioma perfil",
       "Horas acumuladas",
       "Beneficiarios asignados",
     ];
@@ -766,9 +1004,10 @@ router.post("/beneficiarios", async (req, res) => {
         periodo,
         fecha_inicio,
         fecha_fin,
-        estatus
+        estatus,
+        idioma
       )
-      VALUES ($1, $2, $3, $4, $5, 'Activa')
+      VALUES ($1, $2, $3, $4, $5, 'Activa', 'ingles')
       `,
       [
         tutorIdNumero,
@@ -969,9 +1208,10 @@ router.put("/beneficiarios/:id", async (req, res) => {
           periodo,
           fecha_inicio,
           fecha_fin,
-          estatus
+          estatus,
+          idioma
         )
-        VALUES ($1, $2, $3, $4, $5, 'Activa')
+        VALUES ($1, $2, $3, $4, $5, 'Activa', 'ingles')
         `,
         [
           tutorIdNumero,
@@ -1320,6 +1560,8 @@ router.delete("/tutores/:id", async (req, res) => {
     ]);
 
     await client.query(`DELETE FROM asignacion WHERE id_tutor = $1`, [idTutor]);
+
+    await client.query(`DELETE FROM horas_evidencias WHERE id_tutor = $1`, [idTutor]);
 
     await client.query(`DELETE FROM tutortec WHERE id_tutor = $1`, [idTutor]);
 

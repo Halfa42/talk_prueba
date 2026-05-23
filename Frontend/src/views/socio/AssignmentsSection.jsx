@@ -13,6 +13,7 @@ export default function AssignmentsSection({
   deleteButtonClass,
   onSubmit,
   onDelete,
+  onEdit,
 }) {
   return (
     <div className="space-y-6">
@@ -71,17 +72,21 @@ export default function AssignmentsSection({
             </div>
 
             <div>
-              <label className={labelClass}>Periodo</label>
-              <input
+              <label className={labelClass}>Idioma</label>
+              <select
                 className={inputClass}
-                value={assignmentForm.periodo}
+                value={assignmentForm.idioma}
                 onChange={(e) =>
                   setAssignmentForm({
                     ...assignmentForm,
-                    periodo: e.target.value,
+                    idioma: e.target.value,
                   })
                 }
-              />
+              >
+                <option value="">Selecciona idioma</option>
+                <option value="ingles">Inglés</option>
+                <option value="frances">Francés</option>
+              </select>
             </div>
 
             <div>
@@ -99,6 +104,20 @@ export default function AssignmentsSection({
                 <option value="Activa">Activa</option>
                 <option value="No activa">No activa</option>
               </select>
+            </div>
+
+            <div>
+              <label className={labelClass}>Periodo</label>
+              <input
+                className={inputClass}
+                value={assignmentForm.periodo}
+                onChange={(e) =>
+                  setAssignmentForm({
+                    ...assignmentForm,
+                    periodo: e.target.value,
+                  })
+                }
+              />
             </div>
 
             <div>
@@ -149,6 +168,7 @@ export default function AssignmentsSection({
                 <tr>
                   <th className="text-left p-3">Beneficiario</th>
                   <th className="text-left p-3">Tutor</th>
+                  <th className="text-left p-3">Idioma</th>
                   <th className="text-left p-3">Periodo</th>
                   <th className="text-left p-3">Estado</th>
                   <th className="text-left p-3">Opciones</th>
@@ -162,11 +182,23 @@ export default function AssignmentsSection({
                   >
                     <td className="p-3">{row.beneficiario}</td>
                     <td className="p-3">{row.tutor}</td>
+                    <td className="p-3">
+                      {row.idioma === "ingles"
+                        ? "Inglés"
+                        : row.idioma === "frances"
+                        ? "Francés"
+                        : row.idioma}
+                    </td>
                     <td className="p-3">{row.periodo || "Sin periodo"}</td>
                     <td className="p-3">{row.estatus}</td>
                     <td className="p-3">
                       <div className="flex gap-2">
-                        <button className={editButtonClass}>Modificar</button>
+                        <button
+                          onClick={() => onEdit(row)}
+                          className={editButtonClass}
+                        >
+                          Modificar
+                        </button>
                         <button
                           onClick={() => onDelete(row.id_asignacion)}
                           className={deleteButtonClass}
@@ -179,7 +211,7 @@ export default function AssignmentsSection({
                 ))}
                 {asignaciones.length === 0 && (
                   <tr>
-                    <td className="p-4 text-slate-500" colSpan="5">
+                    <td className="p-4 text-slate-500" colSpan="6">
                       No hay asignaciones registradas.
                     </td>
                   </tr>

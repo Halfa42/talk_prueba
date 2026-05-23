@@ -4,6 +4,8 @@ import axios from "axios";
 import SocioSidebar from "./socio/SocioSidebar";
 import BeneficiaryModal from "./socio/BeneficiaryModal";
 import TutorModal from "./socio/TutorModal";
+import AssignmentModal from "./socio/AssignmentModal";
+import HoursEvidenceModal from "./socio/HoursEvidenceModal";
 import DashboardSection from "./socio/DashboardSection";
 import BeneficiariesSection from "./socio/BeneficiariesSection";
 import TutorsSection from "./socio/TutorsSection";
@@ -11,6 +13,7 @@ import AssignmentsSection from "./socio/AssignmentsSection";
 import TrackingSection from "./socio/TrackingSection";
 import ReportsSection from "./socio/ReportsSection";
 import MaterialsSection from "./socio/MaterialsSection";
+import HoursEvidenceSection from "./socio/HoursEvidenceSection";
 import { formatInputDate, isActiveStatus } from "./socio/helpers";
 
 export default function OrgView({ onLogout }) {
@@ -22,12 +25,17 @@ export default function OrgView({ onLogout }) {
   const [simpleBeneficiarios, setSimpleBeneficiarios] = useState([]);
   const [asignaciones, setAsignaciones] = useState([]);
   const [seguimientos, setSeguimientos] = useState([]);
+  const [hoursEvidence, setHoursEvidence] = useState([]);
 
   const [showBeneficiaryModal, setShowBeneficiaryModal] = useState(false);
   const [showTutorModal, setShowTutorModal] = useState(false);
+  const [showAssignmentModal, setShowAssignmentModal] = useState(false);
+  const [showHoursEvidenceModal, setShowHoursEvidenceModal] = useState(false);
 
   const [editingBeneficiary, setEditingBeneficiary] = useState(null);
   const [editingTutor, setEditingTutor] = useState(null);
+  const [editingAssignment, setEditingAssignment] = useState(null);
+  const [editingHoursEvidence, setEditingHoursEvidence] = useState(null);
 
   const [beneficiaryForm, setBeneficiaryForm] = useState({
     nombre: "",
@@ -59,6 +67,7 @@ export default function OrgView({ onLogout }) {
   const [assignmentForm, setAssignmentForm] = useState({
     tutorId: "",
     beneficiarioId: "",
+    idioma: "",
     periodo: "2026-A",
     fecha_inicio: "",
     fecha_fin: "",
@@ -68,6 +77,13 @@ export default function OrgView({ onLogout }) {
   const [trackingForm, setTrackingForm] = useState({
     tutorId: "",
     observacion: "",
+  });
+
+  const [hoursEvidenceForm, setHoursEvidenceForm] = useState({
+    tutorId: "",
+    horas: "",
+    sesiones: "",
+    estado: "Pendiente",
   });
 
   const [materialForm, setMaterialForm] = useState({
@@ -123,6 +139,11 @@ export default function OrgView({ onLogout }) {
     setSeguimientos(response.data);
   };
 
+  const loadHoursEvidence = async () => {
+    const response = await axios.get("http://localhost:3000/api/org/horas-evidencias");
+    setHoursEvidence(response.data);
+  };
+
   const loadAllData = async () => {
     try {
       await Promise.all([
@@ -132,6 +153,7 @@ export default function OrgView({ onLogout }) {
         loadSimpleBeneficiarios(),
         loadAsignaciones(),
         loadSeguimientos(),
+        loadHoursEvidence(),
       ]);
     } catch (error) {
       console.error("Error al cargar datos:", error);
@@ -141,6 +163,16 @@ export default function OrgView({ onLogout }) {
   useEffect(() => {
     loadAllData();
   }, []);
+
+  useEffect(() => {
+  if (!statusMessage) return;
+
+  const timer = setTimeout(() => {
+    setStatusMessage("");
+  }, 3000);
+
+  return () => clearTimeout(timer);
+}, [statusMessage]);
 
   const resetBeneficiaryForm = () => {
     setBeneficiaryForm({
@@ -177,6 +209,7 @@ export default function OrgView({ onLogout }) {
     setAssignmentForm({
       tutorId: "",
       beneficiarioId: "",
+      idioma: "",
       periodo: "2026-A",
       fecha_inicio: "",
       fecha_fin: "",
@@ -188,6 +221,15 @@ export default function OrgView({ onLogout }) {
     setTrackingForm({
       tutorId: "",
       observacion: "",
+    });
+  };
+
+  const resetHoursEvidenceForm = () => {
+    setHoursEvidenceForm({
+      tutorId: "",
+      horas: "",
+      sesiones: "",
+      estado: "Pendiente",
     });
   };
 
@@ -238,6 +280,39 @@ export default function OrgView({ onLogout }) {
     setShowTutorModal(true);
   };
 
+  const openEditAssignmentModal = (assignment) => {
+    setEditingAssignment(assignment.id_asignacion);
+    setAssignmentForm({
+      tutorId: assignment.id_tutor ? String(assignment.id_tutor) : "",
+      beneficiarioId: assignment.id_beneficiario
+        ? String(assignment.id_beneficiario)
+        : "",
+      idioma: assignment.idioma || "",
+      periodo: assignment.periodo || "2026-A",
+      fecha_inicio: formatInputDate(assignment.fecha_inicio),
+      fecha_fin: formatInputDate(assignment.fecha_fin),
+      estatus: assignment.estatus || "Activa",
+    });
+    setShowAssignmentModal(true);
+  };
+
+  const openCreateHoursEvidenceModal = () => {
+    setEditingHoursEvidence(null);
+    resetHoursEvidenceForm();
+    setShowHoursEvidenceModal(true);
+  };
+
+  const openEditHoursEvidenceModal = (record) => {
+    setEditingHoursEvidence(record.id_registro);
+    setHoursEvidenceForm({
+      tutorId: record.id_tutor ? String(record.id_tutor) : "",
+      horas: record.horas ?? "",
+      sesiones: record.sesiones ?? "",
+      estado: record.estado || "Pendiente",
+    });
+    setShowHoursEvidenceModal(true);
+  };
+
   const closeBeneficiaryModal = () => {
     setShowBeneficiaryModal(false);
     setEditingBeneficiary(null);
@@ -248,6 +323,18 @@ export default function OrgView({ onLogout }) {
     setShowTutorModal(false);
     setEditingTutor(null);
     resetTutorForm();
+  };
+
+  const closeAssignmentModal = () => {
+    setShowAssignmentModal(false);
+    setEditingAssignment(null);
+    resetAssignmentForm();
+  };
+
+  const closeHoursEvidenceModal = () => {
+    setShowHoursEvidenceModal(false);
+    setEditingHoursEvidence(null);
+    resetHoursEvidenceForm();
   };
 
   const handleCreateBeneficiary = async (e) => {
@@ -336,6 +423,25 @@ export default function OrgView({ onLogout }) {
     }
   };
 
+  const handleUpdateAssignment = async (e) => {
+    e.preventDefault();
+    setStatusMessage("");
+
+    try {
+      await axios.put(
+        `http://localhost:3000/api/org/asignaciones/${editingAssignment}`,
+        assignmentForm
+      );
+      await loadAllData();
+      closeAssignmentModal();
+      setStatusMessage("✅ Asignación actualizada correctamente.");
+    } catch (error) {
+      setStatusMessage(
+        `❌ ${error.response?.data?.message || "No se pudo actualizar la asignación."}`
+      );
+    }
+  };
+
   const handleSaveTracking = async (e) => {
     e.preventDefault();
     setStatusMessage("");
@@ -348,6 +454,44 @@ export default function OrgView({ onLogout }) {
     } catch (error) {
       setStatusMessage(
         `❌ ${error.response?.data?.message || "No se pudo guardar la observación."}`
+      );
+    }
+  };
+
+  const handleCreateHoursEvidence = async (e) => {
+    e.preventDefault();
+    setStatusMessage("");
+
+    try {
+      await axios.post(
+        "http://localhost:3000/api/org/horas-evidencias",
+        hoursEvidenceForm
+      );
+      await loadHoursEvidence();
+      closeHoursEvidenceModal();
+      setStatusMessage("✅ Registro creado correctamente.");
+    } catch (error) {
+      setStatusMessage(
+        `❌ ${error.response?.data?.message || "No se pudo crear el registro."}`
+      );
+    }
+  };
+
+  const handleUpdateHoursEvidence = async (e) => {
+    e.preventDefault();
+    setStatusMessage("");
+
+    try {
+      await axios.put(
+        `http://localhost:3000/api/org/horas-evidencias/${editingHoursEvidence}`,
+        hoursEvidenceForm
+      );
+      await loadHoursEvidence();
+      closeHoursEvidenceModal();
+      setStatusMessage("✅ Registro actualizado correctamente.");
+    } catch (error) {
+      setStatusMessage(
+        `❌ ${error.response?.data?.message || "No se pudo actualizar el registro."}`
       );
     }
   };
@@ -397,6 +541,23 @@ export default function OrgView({ onLogout }) {
     } catch (error) {
       setStatusMessage(
         `❌ ${error.response?.data?.message || "No se pudo eliminar la asignación."}`
+      );
+    }
+  };
+
+  const handleDeleteHoursEvidence = async (id) => {
+    const confirmed = window.confirm(
+      "¿Seguro que deseas eliminar este registro?"
+    );
+    if (!confirmed) return;
+
+    try {
+      await axios.delete(`http://localhost:3000/api/org/horas-evidencias/${id}`);
+      await loadHoursEvidence();
+      setStatusMessage("✅ Registro eliminado correctamente.");
+    } catch (error) {
+      setStatusMessage(
+        `❌ ${error.response?.data?.message || "No se pudo eliminar el registro."}`
       );
     }
   };
@@ -496,6 +657,7 @@ export default function OrgView({ onLogout }) {
           deleteButtonClass={deleteButtonClass}
           onSubmit={handleCreateAssignment}
           onDelete={handleDeleteAssignment}
+          onEdit={openEditAssignmentModal}
         />
       );
     }
@@ -515,38 +677,15 @@ export default function OrgView({ onLogout }) {
 
     if (orgModule === "logs") {
       return (
-        <div className="space-y-6">
-          <h2 className="text-2xl font-bold">Horas y evidencias</h2>
-          <div className={softCard + " p-5"}>
-            <div className="overflow-hidden rounded-2xl border border-slate-200">
-              <table className="w-full text-sm">
-                <thead className="bg-slate-50 text-slate-500">
-                  <tr>
-                    <th className="text-left p-3">Tutor</th>
-                    <th className="text-left p-3">Horas</th>
-                    <th className="text-left p-3">Sesiones</th>
-                    <th className="text-left p-3">Estado</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[
-                    ["Ana Ruiz", "41 h", "28", "Validado"],
-                    ["Luis Rojas", "36 h", "22", "Pendiente"],
-                    ["Paola Díaz", "29 h", "19", "Validado"],
-                  ].map((row, i) => (
-                    <tr key={i} className="border-t border-slate-200 bg-white">
-                      {row.map((cell, index) => (
-                        <td key={`${cell}-${index}`} className="p-3">
-                          {cell}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
+        <HoursEvidenceSection
+          softCard={softCard}
+          hoursEvidence={hoursEvidence}
+          editButtonClass={editButtonClass}
+          deleteButtonClass={deleteButtonClass}
+          onCreate={openCreateHoursEvidenceModal}
+          onEdit={openEditHoursEvidenceModal}
+          onDelete={handleDeleteHoursEvidence}
+        />
       );
     }
 
@@ -614,6 +753,30 @@ export default function OrgView({ onLogout }) {
         setTutorForm={setTutorForm}
         onClose={closeTutorModal}
         onSubmit={editingTutor ? handleUpdateTutor : handleCreateTutor}
+      />
+
+      <AssignmentModal
+        open={showAssignmentModal}
+        assignmentForm={assignmentForm}
+        setAssignmentForm={setAssignmentForm}
+        simpleTutores={simpleTutores}
+        simpleBeneficiarios={simpleBeneficiarios}
+        onClose={closeAssignmentModal}
+        onSubmit={handleUpdateAssignment}
+      />
+
+      <HoursEvidenceModal
+        open={showHoursEvidenceModal}
+        editingHoursEvidence={editingHoursEvidence}
+        hoursEvidenceForm={hoursEvidenceForm}
+        setHoursEvidenceForm={setHoursEvidenceForm}
+        simpleTutores={simpleTutores}
+        onClose={closeHoursEvidenceModal}
+        onSubmit={
+          editingHoursEvidence
+            ? handleUpdateHoursEvidence
+            : handleCreateHoursEvidence
+        }
       />
     </div>
   );

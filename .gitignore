@@ -23,3 +23,22 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Cypress - pruebas automatizadas
+Backend/cypress/
+Backend/cypress.config.js
+
+# Evidencias generadas por Cypress
+Backend/cypress/screenshots/
+Backend/cypress/videos/
+Backend/cypress/downloads/
+
+# Archivos de pruebas Cypress
+Backend/**/*.cy.js
+Backend/**/*.spec.js
+
+# Reportes o resultados de pruebas
+Backend/cypress/results/
+Backend/cypress/reports/
+Backend/mochawesome-report/
+Backend/mochawesome.json
