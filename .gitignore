@@ -24,21 +24,19 @@ dist-ssr
 *.sln
 *.sw?
 
-# Cypress - pruebas automatizadas
-Backend/cypress/
-Backend/cypress.config.js
 
-# Evidencias generadas por Cypress
-Backend/cypress/screenshots/
-Backend/cypress/videos/
-Backend/cypress/downloads/
+# Cypress global
+cypress/
+**/cypress/
+**/cypress.config.js
+**/*.cy.js
+**/*.spec.js
 
-# Archivos de pruebas Cypress
-Backend/**/*.cy.js
-Backend/**/*.spec.js
-
-# Reportes o resultados de pruebas
-Backend/cypress/results/
-Backend/cypress/reports/
-Backend/mochawesome-report/
-Backend/mochawesome.json
+# Evidencia y resultados de pruebas
+**/cypress/screenshots/
+**/cypress/videos/
+**/cypress/downloads/
+**/cypress/results/
+**/cypress/reports/
+**/mochawesome-report/
+**/mochawesome.json
