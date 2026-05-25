@@ -61,6 +61,9 @@ export default function OrgView({ onLogout }) {
     correo: "",
     contrasena: "",
     idioma: "",
+    periodo: "",
+    fecha_inicio: "",
+    fecha_fin: "",
     estatus: "Activa",
   });
 
@@ -68,7 +71,7 @@ export default function OrgView({ onLogout }) {
     tutorId: "",
     beneficiarioId: "",
     idioma: "",
-    periodo: "2026-A",
+    periodo: "",
     fecha_inicio: "",
     fecha_fin: "",
     estatus: "Activa",
@@ -201,6 +204,9 @@ export default function OrgView({ onLogout }) {
       correo: "",
       contrasena: "",
       idioma: "",
+      periodo: "",
+      fecha_inicio: "",
+      fecha_fin: "",
       estatus: "Activa",
     });
   };
@@ -210,7 +216,7 @@ export default function OrgView({ onLogout }) {
       tutorId: "",
       beneficiarioId: "",
       idioma: "",
-      periodo: "2026-A",
+      periodo: "",
       fecha_inicio: "",
       fecha_fin: "",
       estatus: "Activa",
@@ -275,6 +281,9 @@ export default function OrgView({ onLogout }) {
       correo: tutor.correo || "",
       contrasena: "",
       idioma: tutor.idioma || "",
+      periodo: tutor.periodo || "",
+      fecha_inicio: formatInputDate(tutor.fecha_inicio),
+      fecha_fin: formatInputDate(tutor.fecha_fin),
       estatus: isActiveStatus(tutor.estatus) ? "Activa" : "No activa",
     });
     setShowTutorModal(true);
@@ -288,7 +297,7 @@ export default function OrgView({ onLogout }) {
         ? String(assignment.id_beneficiario)
         : "",
       idioma: assignment.idioma || "",
-      periodo: assignment.periodo || "2026-A",
+      periodo: assignment.periodo || "",
       fecha_inicio: formatInputDate(assignment.fecha_inicio),
       fecha_fin: formatInputDate(assignment.fecha_fin),
       estatus: assignment.estatus || "Activa",

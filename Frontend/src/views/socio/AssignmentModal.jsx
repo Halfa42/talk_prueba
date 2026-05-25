@@ -1,5 +1,11 @@
-import React from "react";
+import React, { useMemo, useState } from "react";
 import ModalWrapper from "./ModalWrapper";
+import {
+  fieldClass,
+  hasRequiredError,
+  labelClass,
+  requiredTextClass,
+} from "./formUtils";
 
 export default function AssignmentModal({
   open,
@@ -10,20 +16,46 @@ export default function AssignmentModal({
   onClose,
   onSubmit,
 }) {
+  const [showValidation, setShowValidation] = useState(false);
+
+  const errors = useMemo(() => {
+    return {
+      tutorId: hasRequiredError(showValidation, assignmentForm.tutorId),
+      beneficiarioId: hasRequiredError(showValidation, assignmentForm.beneficiarioId),
+      idioma: hasRequiredError(showValidation, assignmentForm.idioma),
+      periodo: hasRequiredError(showValidation, assignmentForm.periodo),
+    };
+  }, [showValidation, assignmentForm]);
+
+  const hasErrors = Object.values(errors).some(Boolean);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setShowValidation(true);
+    if (hasErrors) return;
+    onSubmit(e);
+  };
+
+  const resetAndClose = () => {
+    setShowValidation(false);
+    onClose();
+  };
+
   if (!open) return null;
 
-  const inputClass =
-    "w-full rounded-xl border border-slate-300 px-4 py-3 bg-white";
-  const labelClass = "text-sm font-medium text-slate-600 mb-2 block";
-
   return (
-    <ModalWrapper title="Modificar asignación" onClose={onClose}>
-      <form onSubmit={onSubmit} className="space-y-4">
+    <ModalWrapper title="Modificar asignación" onClose={resetAndClose}>
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid md:grid-cols-2 gap-4">
           <div>
-            <label className={labelClass}>Tutor</label>
+            {errors.tutorId && (
+              <span className={requiredTextClass()}>Campo obligatorio</span>
+            )}
+            <label className={labelClass()}>
+              Tutor <span className="text-red-500">*</span>
+            </label>
             <select
-              className={inputClass}
+              className={fieldClass(errors.tutorId)}
               value={assignmentForm.tutorId}
               onChange={(e) =>
                 setAssignmentForm({
@@ -42,9 +74,14 @@ export default function AssignmentModal({
           </div>
 
           <div>
-            <label className={labelClass}>Beneficiario</label>
+            {errors.beneficiarioId && (
+              <span className={requiredTextClass()}>Campo obligatorio</span>
+            )}
+            <label className={labelClass()}>
+              Beneficiario <span className="text-red-500">*</span>
+            </label>
             <select
-              className={inputClass}
+              className={fieldClass(errors.beneficiarioId)}
               value={assignmentForm.beneficiarioId}
               onChange={(e) =>
                 setAssignmentForm({
@@ -66,9 +103,14 @@ export default function AssignmentModal({
           </div>
 
           <div>
-            <label className={labelClass}>Idioma</label>
+            {errors.idioma && (
+              <span className={requiredTextClass()}>Campo obligatorio</span>
+            )}
+            <label className={labelClass()}>
+              Idioma <span className="text-red-500">*</span>
+            </label>
             <select
-              className={inputClass}
+              className={fieldClass(errors.idioma)}
               value={assignmentForm.idioma}
               onChange={(e) =>
                 setAssignmentForm({
@@ -84,9 +126,9 @@ export default function AssignmentModal({
           </div>
 
           <div>
-            <label className={labelClass}>Estado</label>
+            <label className={labelClass()}>Estado</label>
             <select
-              className={inputClass}
+              className={fieldClass(false)}
               value={assignmentForm.estatus}
               onChange={(e) =>
                 setAssignmentForm({
@@ -101,9 +143,14 @@ export default function AssignmentModal({
           </div>
 
           <div>
-            <label className={labelClass}>Periodo</label>
-            <input
-              className={inputClass}
+            {errors.periodo && (
+              <span className={requiredTextClass()}>Campo obligatorio</span>
+            )}
+            <label className={labelClass()}>
+              Periodo <span className="text-red-500">*</span>
+            </label>
+            <select
+              className={fieldClass(errors.periodo)}
               value={assignmentForm.periodo}
               onChange={(e) =>
                 setAssignmentForm({
@@ -111,13 +158,19 @@ export default function AssignmentModal({
                   periodo: e.target.value,
                 })
               }
-            />
+            >
+              <option value="">Selecciona periodo</option>
+              <option value="Enero-Junio">Enero-Junio</option>
+              <option value="Verano">Verano</option>
+              <option value="Agosto-Diciembre">Agosto-Diciembre</option>
+              <option value="Invierno">Invierno</option>
+            </select>
           </div>
 
           <div>
-            <label className={labelClass}>Fecha inicio</label>
+            <label className={labelClass()}>Fecha inicio</label>
             <input
-              className={inputClass}
+              className={fieldClass(false)}
               type="date"
               value={assignmentForm.fecha_inicio}
               onChange={(e) =>
@@ -130,9 +183,9 @@ export default function AssignmentModal({
           </div>
 
           <div>
-            <label className={labelClass}>Fecha fin</label>
+            <label className={labelClass()}>Fecha fin</label>
             <input
-              className={inputClass}
+              className={fieldClass(false)}
               type="date"
               value={assignmentForm.fecha_fin}
               onChange={(e) =>
@@ -148,7 +201,7 @@ export default function AssignmentModal({
         <div className="flex gap-3 pt-2">
           <button
             type="button"
-            onClick={onClose}
+            onClick={resetAndClose}
             className="px-4 py-2 rounded-xl bg-slate-100"
           >
             Cancelar

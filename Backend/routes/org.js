@@ -154,6 +154,9 @@ router.get("/tutores", async (req, res) => {
         u.correo,
         u.estatus,
         tt.idioma,
+        tt.periodo,
+        tt.fecha_inicio,
+        tt.fecha_fin,
         tt.horas_acumuladas,
         COUNT(a.id_asignacion) AS beneficiarios_asignados
       FROM tutortec tt
@@ -171,6 +174,9 @@ router.get("/tutores", async (req, res) => {
         u.correo,
         u.estatus,
         tt.idioma,
+        tt.periodo,
+        tt.fecha_inicio,
+        tt.fecha_fin,
         tt.horas_acumuladas
       ORDER BY u.nombre ASC, u.apellido_paterno ASC
       `
@@ -1246,6 +1252,9 @@ router.post("/tutores", async (req, res) => {
       correo,
       contrasena,
       idioma,
+      periodo,
+      fecha_inicio,
+      fecha_fin,
       estatus,
     } = req.body;
 
@@ -1314,11 +1323,20 @@ router.post("/tutores", async (req, res) => {
       INSERT INTO tutortec (
         id_usuario,
         idioma,
+        periodo,
+        fecha_inicio,
+        fecha_fin,
         horas_acumuladas
       )
-      VALUES ($1, $2, 0)
+      VALUES ($1, $2, $3, $4, $5, 0)
       `,
-      [idUsuario, idiomaLimpio || null]
+      [
+        idUsuario,
+        idiomaLimpio || null,
+        clean(periodo) || null,
+        fecha_inicio || null,
+        fecha_fin || null,
+      ]
     );
 
     await client.query("COMMIT");
@@ -1348,6 +1366,9 @@ router.put("/tutores/:id", async (req, res) => {
       correo,
       contrasena,
       idioma,
+      periodo,
+      fecha_inicio,
+      fecha_fin,
       estatus,
     } = req.body;
 
@@ -1453,10 +1474,20 @@ router.put("/tutores/:id", async (req, res) => {
     await client.query(
       `
       UPDATE tutortec
-      SET idioma = $1
-      WHERE id_tutor = $2
+      SET
+        idioma = $1,
+        periodo = $2,
+        fecha_inicio = $3,
+        fecha_fin = $4
+      WHERE id_tutor = $5
       `,
-      [idiomaLimpio || null, idTutor]
+      [
+        idiomaLimpio || null,
+        clean(periodo) || null,
+        fecha_inicio || null,
+        fecha_fin || null,
+        idTutor,
+      ]
     );
 
     await client.query("COMMIT");

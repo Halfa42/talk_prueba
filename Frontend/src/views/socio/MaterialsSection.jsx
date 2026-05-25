@@ -1,8 +1,13 @@
-import React from "react";
+import React, { useMemo, useState } from "react";
+import {
+  fieldClass,
+  hasRequiredError,
+  labelClass,
+  requiredTextClass,
+} from "./formUtils";
 
 export default function MaterialsSection({
   softCard,
-  inputClass,
   materialForm,
   setMaterialForm,
   selectedMaterialFile,
@@ -10,37 +15,66 @@ export default function MaterialsSection({
   setSelectedMaterialFile,
   onSubmit,
 }) {
+  const [showValidation, setShowValidation] = useState(false);
+
+  const errors = useMemo(() => {
+    return {
+      titulo: hasRequiredError(showValidation, materialForm.titulo),
+    };
+  }, [showValidation, materialForm]);
+
+  const hasErrors = Object.values(errors).some(Boolean);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setShowValidation(true);
+
+    if (hasErrors) return;
+    onSubmit(e);
+  };
+
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">Material institucional</h2>
 
-      <form onSubmit={onSubmit} className={softCard + " p-5 max-w-3xl"}>
+      <form onSubmit={handleSubmit} className={softCard + " p-5 max-w-3xl"}>
         <h3 className="font-semibold text-lg mb-4">Subir material</h3>
 
-        <input
-          className={inputClass + " mb-3"}
-          placeholder="Título"
-          value={materialForm.titulo}
-          onChange={(e) =>
-            setMaterialForm({
-              ...materialForm,
-              titulo: e.target.value,
-            })
-          }
-        />
+        <div className="mb-3">
+          {errors.titulo && (
+            <span className={requiredTextClass()}>Campo obligatorio</span>
+          )}
+          <label className={labelClass()}>
+            Título <span className="text-red-500">*</span>
+          </label>
+          <input
+            className={fieldClass(errors.titulo)}
+            placeholder="Título"
+            value={materialForm.titulo}
+            onChange={(e) =>
+              setMaterialForm({
+                ...materialForm,
+                titulo: e.target.value,
+              })
+            }
+          />
+        </div>
 
-        <textarea
-          className={inputClass + " mb-4"}
-          rows="4"
-          placeholder="Descripción"
-          value={materialForm.descripcion}
-          onChange={(e) =>
-            setMaterialForm({
-              ...materialForm,
-              descripcion: e.target.value,
-            })
-          }
-        />
+        <div className="mb-4">
+          <label className={labelClass()}>Descripción</label>
+          <textarea
+            className={fieldClass(false)}
+            rows="4"
+            placeholder="Descripción"
+            value={materialForm.descripcion}
+            onChange={(e) =>
+              setMaterialForm({
+                ...materialForm,
+                descripcion: e.target.value,
+              })
+            }
+          />
+        </div>
 
         <input
           ref={materialFileInputRef}

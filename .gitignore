@@ -26,17 +26,6 @@ dist-ssr
 
 
 # Cypress global
-cypress/
-**/cypress/
-**/cypress.config.js
-**/*.cy.js
-**/*.spec.js
-
-# Evidencia y resultados de pruebas
-**/cypress/screenshots/
-**/cypress/videos/
-**/cypress/downloads/
-**/cypress/results/
-**/cypress/reports/
-**/mochawesome-report/
-**/mochawesome.json
+Backend/cypress/
+Backend/cypress/**
+Backend/cypress.config.js

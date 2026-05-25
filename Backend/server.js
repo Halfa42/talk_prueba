@@ -4,11 +4,13 @@ const path = require("path");
 const { query } = require("./Database/index");
 
 const app = express();
+const tutorRoutes = require("./routes/tutor");
 
 app.use(cors());
 app.use(express.json());
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use("/api/tutor", tutorRoutes);
 
 app.get("/api/test", (req, res) => {
   res.json({ mensaje: "Backend funcionando" });

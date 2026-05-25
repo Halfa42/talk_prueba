@@ -1,5 +1,11 @@
-import React from "react";
+import React, { useMemo, useState } from "react";
 import ModalWrapper from "./ModalWrapper";
+import {
+  fieldClass,
+  hasRequiredError,
+  labelClass,
+  requiredTextClass,
+} from "./formUtils";
 
 export default function BeneficiaryModal({
   open,
@@ -10,23 +16,58 @@ export default function BeneficiaryModal({
   onClose,
   onSubmit,
 }) {
-  if (!open) return null;
+  const [showValidation, setShowValidation] = useState(false);
 
-  const inputClass =
-    "w-full rounded-xl border border-slate-300 px-4 py-3 bg-white";
-  const labelClass = "text-sm font-medium text-slate-600 mb-2 block";
+  const passwordRequired = !editingBeneficiary;
+
+  const errors = useMemo(() => {
+    return {
+      nombre: hasRequiredError(showValidation, beneficiaryForm.nombre),
+      apellido_paterno: hasRequiredError(
+        showValidation,
+        beneficiaryForm.apellido_paterno
+      ),
+      correo: hasRequiredError(showValidation, beneficiaryForm.correo),
+      contrasena: passwordRequired
+        ? hasRequiredError(showValidation, beneficiaryForm.contrasena)
+        : false,
+      nivel: hasRequiredError(showValidation, beneficiaryForm.nivel),
+      tutorId: hasRequiredError(showValidation, beneficiaryForm.tutorId),
+    };
+  }, [showValidation, beneficiaryForm, passwordRequired]);
+
+  const hasErrors = Object.values(errors).some(Boolean);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setShowValidation(true);
+    if (hasErrors) return;
+    onSubmit(e);
+  };
+
+  const resetAndClose = () => {
+    setShowValidation(false);
+    onClose();
+  };
+
+  if (!open) return null;
 
   return (
     <ModalWrapper
       title={editingBeneficiary ? "Modificar beneficiario" : "Nuevo beneficiario"}
-      onClose={onClose}
+      onClose={resetAndClose}
     >
-      <form onSubmit={onSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid md:grid-cols-2 gap-4">
           <div>
-            <label className={labelClass}>Nombre</label>
+            {errors.nombre && (
+              <span className={requiredTextClass()}>Campo obligatorio</span>
+            )}
+            <label className={labelClass()}>
+              Nombre <span className="text-red-500">*</span>
+            </label>
             <input
-              className={inputClass}
+              className={fieldClass(errors.nombre)}
               value={beneficiaryForm.nombre}
               onChange={(e) =>
                 setBeneficiaryForm({ ...beneficiaryForm, nombre: e.target.value })
@@ -35,9 +76,14 @@ export default function BeneficiaryModal({
           </div>
 
           <div>
-            <label className={labelClass}>Apellido paterno</label>
+            {errors.apellido_paterno && (
+              <span className={requiredTextClass()}>Campo obligatorio</span>
+            )}
+            <label className={labelClass()}>
+              Apellido paterno <span className="text-red-500">*</span>
+            </label>
             <input
-              className={inputClass}
+              className={fieldClass(errors.apellido_paterno)}
               value={beneficiaryForm.apellido_paterno}
               onChange={(e) =>
                 setBeneficiaryForm({
@@ -49,9 +95,9 @@ export default function BeneficiaryModal({
           </div>
 
           <div>
-            <label className={labelClass}>Apellido materno</label>
+            <label className={labelClass()}>Apellido materno</label>
             <input
-              className={inputClass}
+              className={fieldClass(false)}
               value={beneficiaryForm.apellido_materno}
               onChange={(e) =>
                 setBeneficiaryForm({
@@ -63,9 +109,14 @@ export default function BeneficiaryModal({
           </div>
 
           <div>
-            <label className={labelClass}>Correo</label>
+            {errors.correo && (
+              <span className={requiredTextClass()}>Campo obligatorio</span>
+            )}
+            <label className={labelClass()}>
+              Correo <span className="text-red-500">*</span>
+            </label>
             <input
-              className={inputClass}
+              className={fieldClass(errors.correo)}
               type="email"
               value={beneficiaryForm.correo}
               onChange={(e) =>
@@ -75,11 +126,20 @@ export default function BeneficiaryModal({
           </div>
 
           <div>
-            <label className={labelClass}>
-              {editingBeneficiary ? "Nueva contraseña (opcional)" : "Contraseña"}
+            {errors.contrasena && (
+              <span className={requiredTextClass()}>Campo obligatorio</span>
+            )}
+            <label className={labelClass()}>
+              {editingBeneficiary ? (
+                <>Nueva contraseña</>
+              ) : (
+                <>
+                  Contraseña <span className="text-red-500">*</span>
+                </>
+              )}
             </label>
             <input
-              className={inputClass}
+              className={fieldClass(errors.contrasena)}
               type="password"
               value={beneficiaryForm.contrasena}
               onChange={(e) =>
@@ -92,9 +152,14 @@ export default function BeneficiaryModal({
           </div>
 
           <div>
-            <label className={labelClass}>Nivel</label>
+            {errors.nivel && (
+              <span className={requiredTextClass()}>Campo obligatorio</span>
+            )}
+            <label className={labelClass()}>
+              Nivel <span className="text-red-500">*</span>
+            </label>
             <select
-              className={inputClass}
+              className={fieldClass(errors.nivel)}
               value={beneficiaryForm.nivel}
               onChange={(e) =>
                 setBeneficiaryForm({ ...beneficiaryForm, nivel: e.target.value })
@@ -109,9 +174,14 @@ export default function BeneficiaryModal({
           </div>
 
           <div>
-            <label className={labelClass}>Tutor asignado</label>
+            {errors.tutorId && (
+              <span className={requiredTextClass()}>Campo obligatorio</span>
+            )}
+            <label className={labelClass()}>
+              Tutor asignado <span className="text-red-500">*</span>
+            </label>
             <select
-              className={inputClass}
+              className={fieldClass(errors.tutorId)}
               value={beneficiaryForm.tutorId}
               onChange={(e) =>
                 setBeneficiaryForm({
@@ -130,9 +200,9 @@ export default function BeneficiaryModal({
           </div>
 
           <div>
-            <label className={labelClass}>Estado</label>
+            <label className={labelClass()}>Estado</label>
             <select
-              className={inputClass}
+              className={fieldClass(false)}
               value={beneficiaryForm.estatus}
               onChange={(e) =>
                 setBeneficiaryForm({
@@ -147,9 +217,9 @@ export default function BeneficiaryModal({
           </div>
 
           <div>
-            <label className={labelClass}>Matrícula/Folio</label>
+            <label className={labelClass()}>Matrícula/Folio</label>
             <input
-              className={inputClass}
+              className={fieldClass(false)}
               value={beneficiaryForm.matricula_folio}
               onChange={(e) =>
                 setBeneficiaryForm({
@@ -161,9 +231,9 @@ export default function BeneficiaryModal({
           </div>
 
           <div>
-            <label className={labelClass}>Idioma</label>
-            <input
-              className={inputClass}
+            <label className={labelClass()}>Idioma</label>
+            <select
+              className={fieldClass(false)}
               value={beneficiaryForm.idioma}
               onChange={(e) =>
                 setBeneficiaryForm({
@@ -171,13 +241,17 @@ export default function BeneficiaryModal({
                   idioma: e.target.value,
                 })
               }
-            />
+            >
+              <option value="">Selecciona idioma</option>
+              <option value="ingles">Inglés</option>
+              <option value="frances">Francés</option>
+            </select>
           </div>
 
           <div>
-            <label className={labelClass}>Periodo</label>
-            <input
-              className={inputClass}
+            <label className={labelClass()}>Periodo</label>
+            <select
+              className={fieldClass(false)}
               value={beneficiaryForm.periodo}
               onChange={(e) =>
                 setBeneficiaryForm({
@@ -185,13 +259,19 @@ export default function BeneficiaryModal({
                   periodo: e.target.value,
                 })
               }
-            />
+            >
+              <option value="">Selecciona periodo</option>
+              <option value="Enero-Junio">Enero-Junio</option>
+              <option value="Verano">Verano</option>
+              <option value="Agosto-Diciembre">Agosto-Diciembre</option>
+              <option value="Invierno">Invierno</option>
+            </select>
           </div>
 
           <div>
-            <label className={labelClass}>Fecha inicio</label>
+            <label className={labelClass()}>Fecha inicio</label>
             <input
-              className={inputClass}
+              className={fieldClass(false)}
               type="date"
               value={beneficiaryForm.fecha_inicio}
               onChange={(e) =>
@@ -204,9 +284,9 @@ export default function BeneficiaryModal({
           </div>
 
           <div>
-            <label className={labelClass}>Fecha fin</label>
+            <label className={labelClass()}>Fecha fin</label>
             <input
-              className={inputClass}
+              className={fieldClass(false)}
               type="date"
               value={beneficiaryForm.fecha_fin}
               onChange={(e) =>
@@ -222,7 +302,7 @@ export default function BeneficiaryModal({
         <div className="flex gap-3 pt-2">
           <button
             type="button"
-            onClick={onClose}
+            onClick={resetAndClose}
             className="px-4 py-2 rounded-xl bg-slate-100"
           >
             Cancelar

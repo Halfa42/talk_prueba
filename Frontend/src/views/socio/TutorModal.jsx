@@ -1,5 +1,11 @@
-import React from "react";
+import React, { useMemo, useState } from "react";
 import ModalWrapper from "./ModalWrapper";
+import {
+  fieldClass,
+  hasRequiredError,
+  labelClass,
+  requiredTextClass,
+} from "./formUtils";
 
 export default function TutorModal({
   open,
@@ -9,23 +15,53 @@ export default function TutorModal({
   onClose,
   onSubmit,
 }) {
-  if (!open) return null;
+  const [showValidation, setShowValidation] = useState(false);
 
-  const inputClass =
-    "w-full rounded-xl border border-slate-300 px-4 py-3 bg-white";
-  const labelClass = "text-sm font-medium text-slate-600 mb-2 block";
+  const passwordRequired = !editingTutor;
+
+  const errors = useMemo(() => {
+    return {
+      nombre: hasRequiredError(showValidation, tutorForm.nombre),
+      apellido_paterno: hasRequiredError(showValidation, tutorForm.apellido_paterno),
+      correo: hasRequiredError(showValidation, tutorForm.correo),
+      contrasena: passwordRequired
+        ? hasRequiredError(showValidation, tutorForm.contrasena)
+        : false,
+    };
+  }, [showValidation, tutorForm, passwordRequired]);
+
+  const hasErrors = Object.values(errors).some(Boolean);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setShowValidation(true);
+    if (hasErrors) return;
+    onSubmit(e);
+  };
+
+  const resetAndClose = () => {
+    setShowValidation(false);
+    onClose();
+  };
+
+  if (!open) return null;
 
   return (
     <ModalWrapper
       title={editingTutor ? "Modificar tutor" : "Nuevo tutor"}
-      onClose={onClose}
+      onClose={resetAndClose}
     >
-      <form onSubmit={onSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid md:grid-cols-2 gap-4">
           <div>
-            <label className={labelClass}>Nombre</label>
+            {errors.nombre && (
+              <span className={requiredTextClass()}>Campo obligatorio</span>
+            )}
+            <label className={labelClass()}>
+              Nombre <span className="text-red-500">*</span>
+            </label>
             <input
-              className={inputClass}
+              className={fieldClass(errors.nombre)}
               value={tutorForm.nombre}
               onChange={(e) =>
                 setTutorForm({ ...tutorForm, nombre: e.target.value })
@@ -34,9 +70,14 @@ export default function TutorModal({
           </div>
 
           <div>
-            <label className={labelClass}>Apellido paterno</label>
+            {errors.apellido_paterno && (
+              <span className={requiredTextClass()}>Campo obligatorio</span>
+            )}
+            <label className={labelClass()}>
+              Apellido paterno <span className="text-red-500">*</span>
+            </label>
             <input
-              className={inputClass}
+              className={fieldClass(errors.apellido_paterno)}
               value={tutorForm.apellido_paterno}
               onChange={(e) =>
                 setTutorForm({
@@ -48,9 +89,9 @@ export default function TutorModal({
           </div>
 
           <div>
-            <label className={labelClass}>Apellido materno</label>
+            <label className={labelClass()}>Apellido materno</label>
             <input
-              className={inputClass}
+              className={fieldClass(false)}
               value={tutorForm.apellido_materno}
               onChange={(e) =>
                 setTutorForm({
@@ -62,9 +103,14 @@ export default function TutorModal({
           </div>
 
           <div>
-            <label className={labelClass}>Correo</label>
+            {errors.correo && (
+              <span className={requiredTextClass()}>Campo obligatorio</span>
+            )}
+            <label className={labelClass()}>
+              Correo <span className="text-red-500">*</span>
+            </label>
             <input
-              className={inputClass}
+              className={fieldClass(errors.correo)}
               type="email"
               value={tutorForm.correo}
               onChange={(e) =>
@@ -74,11 +120,20 @@ export default function TutorModal({
           </div>
 
           <div>
-            <label className={labelClass}>
-              {editingTutor ? "Nueva contraseña (opcional)" : "Contraseña"}
+            {errors.contrasena && (
+              <span className={requiredTextClass()}>Campo obligatorio</span>
+            )}
+            <label className={labelClass()}>
+              {editingTutor ? (
+                <>Nueva contraseña</>
+              ) : (
+                <>
+                  Contraseña <span className="text-red-500">*</span>
+                </>
+              )}
             </label>
             <input
-              className={inputClass}
+              className={fieldClass(errors.contrasena)}
               type="password"
               value={tutorForm.contrasena}
               onChange={(e) =>
@@ -88,20 +143,65 @@ export default function TutorModal({
           </div>
 
           <div>
-            <label className={labelClass}>Idioma</label>
-            <input
-              className={inputClass}
+            <label className={labelClass()}>Idioma</label>
+            <select
+              className={fieldClass(false)}
               value={tutorForm.idioma}
               onChange={(e) =>
                 setTutorForm({ ...tutorForm, idioma: e.target.value })
+              }
+            >
+              <option value="">Selecciona idioma</option>
+              <option value="ingles">Inglés</option>
+              <option value="frances">Francés</option>
+            </select>
+          </div>
+
+          <div>
+            <label className={labelClass()}>Periodo</label>
+            <select
+              className={fieldClass(false)}
+              value={tutorForm.periodo}
+              onChange={(e) =>
+                setTutorForm({ ...tutorForm, periodo: e.target.value })
+              }
+            >
+              <option value="">Selecciona periodo</option>
+              <option value="Enero-Junio">Enero-Junio</option>
+              <option value="Verano">Verano</option>
+              <option value="Agosto-Diciembre">Agosto-Diciembre</option>
+              <option value="Invierno">Invierno</option>
+            </select>
+          </div>
+
+          <div>
+            <label className={labelClass()}>Fecha inicio</label>
+            <input
+              className={fieldClass(false)}
+              type="date"
+              value={tutorForm.fecha_inicio}
+              onChange={(e) =>
+                setTutorForm({ ...tutorForm, fecha_inicio: e.target.value })
               }
             />
           </div>
 
           <div>
-            <label className={labelClass}>Estado</label>
+            <label className={labelClass()}>Fecha fin</label>
+            <input
+              className={fieldClass(false)}
+              type="date"
+              value={tutorForm.fecha_fin}
+              onChange={(e) =>
+                setTutorForm({ ...tutorForm, fecha_fin: e.target.value })
+              }
+            />
+          </div>
+
+          <div>
+            <label className={labelClass()}>Estado</label>
             <select
-              className={inputClass}
+              className={fieldClass(false)}
               value={tutorForm.estatus}
               onChange={(e) =>
                 setTutorForm({ ...tutorForm, estatus: e.target.value })
@@ -116,7 +216,7 @@ export default function TutorModal({
         <div className="flex gap-3 pt-2">
           <button
             type="button"
-            onClick={onClose}
+            onClick={resetAndClose}
             className="px-4 py-2 rounded-xl bg-slate-100"
           >
             Cancelar

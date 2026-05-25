@@ -1,40 +1,162 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Users, FolderOpen, ClipboardList, Clock3 } from "lucide-react";
 import KpiCard from "../../components/KpiCard";
-import { upcomingSessions } from "./tutorData";
 import "../../styles/tutor/TutorDashboard.css";
 
 const quickActions = [
   ["students", "Mis alumnos", "Consulta perfiles y avance.", Users],
-  ["materials", "Materiales", "Sube recursos por tema.", FolderOpen],
+  ["materials", "Materiales", "Consulta recursos compartidos.", FolderOpen],
   ["tasks", "Tareas", "Asigna y revisa entregas.", ClipboardList],
   ["hours", "Horas", "Consulta horas registradas.", Clock3],
 ];
 
-export default function TutorDashboard({ softCard, onModuleChange }) {
+export default function TutorDashboard({ softCard, onModuleChange, tutorUserId }) {
+  const [summary, setSummary] = useState({ tareas_por_revisar: 0, horas_acumuladas: 0 });
+  const [calendarRows, setCalendarRows] = useState([]);
+  const [students, setStudents] = useState([]);
+  const [showAddSession, setShowAddSession] = useState(false);
+  const [newSession, setNewSession] = useState({
+    id_asignacion: "",
+    dia_semana: "",
+    hora_inicio: "",
+    hora_fin: "",
+  });
+  const [calendarMsg, setCalendarMsg] = useState(null);
+  const [deletingSessionId, setDeletingSessionId] = useState(null);
+
+  const formatTimeAmPm = (timeValue) => {
+    if (!timeValue) return "";
+    const base = String(timeValue).slice(0, 5);
+    const [hoursRaw, minutes] = base.split(":");
+    const hours = Number(hoursRaw);
+    if (!Number.isInteger(hours) || minutes === undefined) return base;
+    const suffix = hours >= 12 ? "PM" : "AM";
+    const hours12 = hours % 12 === 0 ? 12 : hours % 12;
+    return `${hours12}:${minutes} ${suffix}`;
+  };
+
+  const loadDashboardData = async () => {
+    try {
+      const [summaryRes, calendarRes, studentsRes] = await Promise.all([
+        fetch(`http://localhost:3000/api/dashboard/${tutorUserId}/summary`),
+        fetch(`http://localhost:3000/api/dashboard/${tutorUserId}/calendario`),
+        fetch(`http://localhost:3000/api/tutor-students?userId=${tutorUserId}`),
+      ]);
+
+      const summaryData = await summaryRes.json();
+      const calendarData = await calendarRes.json();
+      const studentsData = await studentsRes.json();
+
+      setSummary(summaryData || { tareas_por_revisar: 0, horas_acumuladas: 0 });
+      setCalendarRows(Array.isArray(calendarData) ? calendarData : []);
+      setStudents(Array.isArray(studentsData) ? studentsData : []);
+    } catch (error) {
+      console.error("Error loading dashboard data:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (tutorUserId) {
+      loadDashboardData();
+    }
+  }, [tutorUserId]);
+
+  const handleSessionInputChange = (e) => {
+    setNewSession((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleAddSession = async () => {
+    setCalendarMsg(null);
+
+    if (
+      !newSession.id_asignacion ||
+      newSession.dia_semana === "" ||
+      !newSession.hora_inicio ||
+      !newSession.hora_fin
+    ) {
+      setCalendarMsg({ tipo: "error", texto: "Completa alumno, día y horario." });
+      return;
+    }
+
+    if (newSession.hora_fin <= newSession.hora_inicio) {
+      setCalendarMsg({
+        tipo: "error",
+        texto: "La hora fin debe ser mayor que la hora inicio.",
+      });
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `http://localhost:3000/api/dashboard/${tutorUserId}/calendario`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id_asignacion: Number(newSession.id_asignacion),
+            dia_semana: Number(newSession.dia_semana),
+            hora_inicio: newSession.hora_inicio,
+            hora_fin: newSession.hora_fin,
+          }),
+        }
+      );
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || "No se pudo agregar la sesión");
+      }
+
+      setCalendarMsg({ tipo: "ok", texto: "Sesión agregada al calendario." });
+      setNewSession({
+        id_asignacion: "",
+        dia_semana: "",
+        hora_inicio: "",
+        hora_fin: "",
+      });
+      await loadDashboardData();
+    } catch (error) {
+      setCalendarMsg({ tipo: "error", texto: error.message });
+    }
+  };
+
+  const handleDeleteSession = async (sessionId) => {
+    const confirmed = window.confirm("¿Seguro que deseas eliminar esta sesión del calendario?");
+    if (!confirmed) return;
+
+    try {
+      setDeletingSessionId(sessionId);
+      setCalendarMsg(null);
+
+      const response = await fetch(
+        `http://localhost:3000/api/dashboard/${tutorUserId}/calendario/${sessionId}`,
+        { method: "DELETE" }
+      );
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || "No se pudo eliminar la sesión");
+      }
+
+      setCalendarMsg({ tipo: "ok", texto: "Sesión eliminada correctamente." });
+      await loadDashboardData();
+    } catch (error) {
+      setCalendarMsg({ tipo: "error", texto: error.message });
+    } finally {
+      setDeletingSessionId(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="grid md:grid-cols-2 gap-2">
-        <KpiCard title="Tareas por revisar" value="6" />
-        <KpiCard title="Horas acumuladas" value="1%" />
+        <KpiCard title="Tareas por revisar" value={String(summary.tareas_por_revisar ?? 0)} />
+        <KpiCard title="Horas acumuladas" value={`${summary.horas_acumuladas ?? 0} h`} />
       </div>
+
       <div className="grid xl:grid-cols-3 gap-6">
         <div className="xl:col-span-2 space-y-6">
           <div className={softCard + " p-5"}>
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="text-xl font-semibold">Panel operativo</h2>
-                <p className="text-sm text-slate-500">
-                  Accesos rápidos para continuar con tus actividades del día.
-                </p>
-              </div>
-              <button
-                onClick={() => onModuleChange("session")}
-                className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm"
-              >
-                Nueva sesión
-              </button>
-            </div>
+            <h2 className="text-xl font-semibold mb-4">Panel operativo</h2>
             <div className="grid md:grid-cols-4 gap-4 text-sm">
               {quickActions.map(([key, title, description, Icon]) => (
                 <button
@@ -49,31 +171,149 @@ export default function TutorDashboard({ softCard, onModuleChange }) {
               ))}
             </div>
           </div>
+
           <div className={softCard + " p-5"}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-lg">Próximas sesiones</h3>
+              <h3 className="font-semibold text-lg">Calendario</h3>
+              <button
+                onClick={() => setShowAddSession((prev) => !prev)}
+                className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm"
+              >
+                Agregar sesión
+              </button>
             </div>
+
+            {showAddSession && (
+              <div className="mb-4 p-4 rounded-xl border bg-slate-50 grid md:grid-cols-4 gap-3">
+                <select
+                  name="id_asignacion"
+                  value={newSession.id_asignacion}
+                  onChange={handleSessionInputChange}
+                  className="rounded-xl border border-slate-300 px-3 py-2 bg-white"
+                >
+                  <option value="">Alumno</option>
+                  {students.map((student) => (
+                    <option key={student.id_asignacion} value={student.id_asignacion}>
+                      {student.nombre} {student.apellido_paterno}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  name="dia_semana"
+                  value={newSession.dia_semana}
+                  onChange={handleSessionInputChange}
+                  className="rounded-xl border border-slate-300 px-3 py-2 bg-white"
+                >
+                  <option value="">Día</option>
+                  <option value="1">Lunes</option>
+                  <option value="2">Martes</option>
+                  <option value="3">Miércoles</option>
+                  <option value="4">Jueves</option>
+                  <option value="5">Viernes</option>
+                  <option value="6">Sábado</option>
+                  <option value="0">Domingo</option>
+                </select>
+
+                <input
+                  type="time"
+                  name="hora_inicio"
+                  value={newSession.hora_inicio}
+                  onChange={handleSessionInputChange}
+                  className="rounded-xl border border-slate-300 px-3 py-2 bg-white"
+                />
+
+                <input
+                  type="time"
+                  name="hora_fin"
+                  value={newSession.hora_fin}
+                  onChange={handleSessionInputChange}
+                  className="rounded-xl border border-slate-300 px-3 py-2 bg-white"
+                />
+
+                <div className="md:col-span-4">
+                  <button
+                    onClick={handleAddSession}
+                    className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm"
+                  >
+                    Guardar sesión
+                  </button>
+
+                  {calendarMsg && (
+                    <p
+                      className={`mt-2 text-sm ${
+                        calendarMsg.tipo === "ok" ? "text-green-600" : "text-red-600"
+                      }`}
+                    >
+                      {calendarMsg.texto}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div className="overflow-hidden rounded-2xl border border-slate-200">
               <table className="w-full text-sm">
                 <thead className="bg-slate-50 text-slate-500">
                   <tr>
                     <th className="text-left p-3">Alumno</th>
+                    <th className="text-left p-3">Día</th>
                     <th className="text-left p-3">Horario</th>
+                    <th className="text-left p-3">Opciones</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {upcomingSessions.map((row, index) => (
-                    <tr key={index} className="border-t border-slate-200 bg-white">
-                      {row.map((cell) => (
-                        <td key={cell} className="p-3">
-                          {cell}
-                        </td>
-                      ))}
+                  {calendarRows.length === 0 ? (
+                    <tr className="border-t border-slate-200 bg-white">
+                      <td className="p-3 text-slate-400" colSpan={4}>
+                        Sin sesiones programadas
+                      </td>
                     </tr>
-                  ))}
+                  ) : (
+                    calendarRows.map((row) => (
+                      <tr key={row.id_sesion} className="border-t border-slate-200 bg-white">
+                        <td className="p-3">{row.alumno}</td>
+                        <td className="p-3">{row.dia}</td>
+                        <td className="p-3">
+                          {formatTimeAmPm(row.hora_inicio)} - {formatTimeAmPm(row.hora_fin)}
+                        </td>
+                        <td className="p-3">
+                          <button
+                            onClick={() => handleDeleteSession(row.id_sesion)}
+                            disabled={deletingSessionId === row.id_sesion}
+                            className="px-3 py-2 rounded-xl bg-red-100 text-red-700 border border-red-200 hover:bg-red-200 transition text-sm"
+                          >
+                            {deletingSessionId === row.id_sesion ? "Eliminando..." : "Eliminar"}
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
+          </div>
+        </div>
+
+        <div className={softCard + " p-5"}>
+          <h3 className="font-semibold text-lg mb-4">Mis alumnos</h3>
+          <div className="space-y-3 text-sm">
+            {students.length === 0 && (
+              <div className="p-3 rounded-xl bg-slate-50 border text-slate-500">
+                No hay alumnos asignados todavía.
+              </div>
+            )}
+
+            {students.slice(0, 6).map((student) => (
+              <div key={student.id_asignacion} className="p-3 rounded-xl bg-slate-50 border">
+                <div className="font-medium">
+                  {student.nombre} {student.apellido_paterno}
+                </div>
+                <div className="text-xs text-slate-500 mt-1">
+                  {student.nivel} · {student.idioma_curso || student.idioma || "N/A"}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>

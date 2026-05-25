@@ -1,9 +1,13 @@
-import React from "react";
+import React, { useMemo, useState } from "react";
+import {
+  fieldClass,
+  hasRequiredError,
+  labelClass,
+  requiredTextClass,
+} from "./formUtils";
 
 export default function AssignmentsSection({
   softCard,
-  inputClass,
-  labelClass,
   assignmentForm,
   setAssignmentForm,
   simpleTutores,
@@ -15,6 +19,34 @@ export default function AssignmentsSection({
   onDelete,
   onEdit,
 }) {
+  const [showValidation, setShowValidation] = useState(false);
+
+  const errors = useMemo(() => {
+    return {
+      tutorId: hasRequiredError(showValidation, assignmentForm.tutorId),
+      beneficiarioId: hasRequiredError(
+        showValidation,
+        assignmentForm.beneficiarioId
+      ),
+      idioma: hasRequiredError(showValidation, assignmentForm.idioma),
+      periodo: hasRequiredError(showValidation, assignmentForm.periodo),
+    };
+  }, [showValidation, assignmentForm]);
+
+  const hasErrors = Object.values(errors).some(Boolean);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setShowValidation(true);
+
+    if (hasErrors) return;
+
+    try {
+      await onSubmit(e);
+      setShowValidation(false);
+    } catch (error) {}
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -22,14 +54,19 @@ export default function AssignmentsSection({
       </div>
 
       <div className="grid xl:grid-cols-2 gap-6">
-        <form onSubmit={onSubmit} className={softCard + " p-5"}>
+        <form onSubmit={handleSubmit} className={softCard + " p-5"}>
           <h3 className="font-semibold text-lg mb-4">Nueva asignación</h3>
 
           <div className="grid md:grid-cols-2 gap-4">
             <div>
-              <label className={labelClass}>Tutor</label>
+              {errors.tutorId && (
+                <span className={requiredTextClass()}>Campo obligatorio</span>
+              )}
+              <label className={labelClass()}>
+                Tutor <span className="text-red-500">*</span>
+              </label>
               <select
-                className={inputClass}
+                className={fieldClass(errors.tutorId)}
                 value={assignmentForm.tutorId}
                 onChange={(e) =>
                   setAssignmentForm({
@@ -48,9 +85,14 @@ export default function AssignmentsSection({
             </div>
 
             <div>
-              <label className={labelClass}>Beneficiario</label>
+              {errors.beneficiarioId && (
+                <span className={requiredTextClass()}>Campo obligatorio</span>
+              )}
+              <label className={labelClass()}>
+                Beneficiario <span className="text-red-500">*</span>
+              </label>
               <select
-                className={inputClass}
+                className={fieldClass(errors.beneficiarioId)}
                 value={assignmentForm.beneficiarioId}
                 onChange={(e) =>
                   setAssignmentForm({
@@ -72,9 +114,14 @@ export default function AssignmentsSection({
             </div>
 
             <div>
-              <label className={labelClass}>Idioma</label>
+              {errors.idioma && (
+                <span className={requiredTextClass()}>Campo obligatorio</span>
+              )}
+              <label className={labelClass()}>
+                Idioma <span className="text-red-500">*</span>
+              </label>
               <select
-                className={inputClass}
+                className={fieldClass(errors.idioma)}
                 value={assignmentForm.idioma}
                 onChange={(e) =>
                   setAssignmentForm({
@@ -90,9 +137,9 @@ export default function AssignmentsSection({
             </div>
 
             <div>
-              <label className={labelClass}>Estado</label>
+              <label className={labelClass()}>Estado</label>
               <select
-                className={inputClass}
+                className={fieldClass(false)}
                 value={assignmentForm.estatus}
                 onChange={(e) =>
                   setAssignmentForm({
@@ -107,9 +154,14 @@ export default function AssignmentsSection({
             </div>
 
             <div>
-              <label className={labelClass}>Periodo</label>
-              <input
-                className={inputClass}
+              {errors.periodo && (
+                <span className={requiredTextClass()}>Campo obligatorio</span>
+              )}
+              <label className={labelClass()}>
+                Periodo <span className="text-red-500">*</span>
+              </label>
+              <select
+                className={fieldClass(errors.periodo)}
                 value={assignmentForm.periodo}
                 onChange={(e) =>
                   setAssignmentForm({
@@ -117,13 +169,19 @@ export default function AssignmentsSection({
                     periodo: e.target.value,
                   })
                 }
-              />
+              >
+                <option value="">Selecciona periodo</option>
+                <option value="Enero-Junio">Enero-Junio</option>
+                <option value="Verano">Verano</option>
+                <option value="Agosto-Diciembre">Agosto-Diciembre</option>
+                <option value="Invierno">Invierno</option>
+              </select>
             </div>
 
             <div>
-              <label className={labelClass}>Fecha inicio</label>
+              <label className={labelClass()}>Fecha inicio</label>
               <input
-                className={inputClass}
+                className={fieldClass(false)}
                 type="date"
                 value={assignmentForm.fecha_inicio}
                 onChange={(e) =>
@@ -136,9 +194,9 @@ export default function AssignmentsSection({
             </div>
 
             <div>
-              <label className={labelClass}>Fecha fin</label>
+              <label className={labelClass()}>Fecha fin</label>
               <input
-                className={inputClass}
+                className={fieldClass(false)}
                 type="date"
                 value={assignmentForm.fecha_fin}
                 onChange={(e) =>

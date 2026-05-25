@@ -1,5 +1,11 @@
-import React from "react";
+import React, { useMemo, useState } from "react";
 import ModalWrapper from "./ModalWrapper";
+import {
+  fieldClass,
+  hasRequiredError,
+  labelClass,
+  requiredTextClass,
+} from "./formUtils";
 
 export default function HoursEvidenceModal({
   open,
@@ -10,23 +16,49 @@ export default function HoursEvidenceModal({
   onClose,
   onSubmit,
 }) {
-  if (!open) return null;
+  const [showValidation, setShowValidation] = useState(false);
 
-  const inputClass =
-    "w-full rounded-xl border border-slate-300 px-4 py-3 bg-white";
-  const labelClass = "text-sm font-medium text-slate-600 mb-2 block";
+  const errors = useMemo(() => {
+    return {
+      tutorId: hasRequiredError(showValidation, hoursEvidenceForm.tutorId),
+      horas: hasRequiredError(showValidation, hoursEvidenceForm.horas),
+      sesiones: hasRequiredError(showValidation, hoursEvidenceForm.sesiones),
+    };
+  }, [showValidation, hoursEvidenceForm]);
+
+  const hasErrors = Object.values(errors).some(Boolean);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setShowValidation(true);
+
+    if (hasErrors) return;
+    onSubmit(e);
+  };
+
+  const resetAndClose = () => {
+    setShowValidation(false);
+    onClose();
+  };
+
+  if (!open) return null;
 
   return (
     <ModalWrapper
       title={editingHoursEvidence ? "Modificar registro" : "Nuevo registro"}
-      onClose={onClose}
+      onClose={resetAndClose}
     >
-      <form onSubmit={onSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid md:grid-cols-2 gap-4">
           <div>
-            <label className={labelClass}>Tutor</label>
+            {errors.tutorId && (
+              <span className={requiredTextClass()}>Campo obligatorio</span>
+            )}
+            <label className={labelClass()}>
+              Tutor <span className="text-red-500">*</span>
+            </label>
             <select
-              className={inputClass}
+              className={fieldClass(errors.tutorId)}
               value={hoursEvidenceForm.tutorId}
               onChange={(e) =>
                 setHoursEvidenceForm({
@@ -45,9 +77,9 @@ export default function HoursEvidenceModal({
           </div>
 
           <div>
-            <label className={labelClass}>Estado</label>
+            <label className={labelClass()}>Estado</label>
             <select
-              className={inputClass}
+              className={fieldClass(false)}
               value={hoursEvidenceForm.estado}
               onChange={(e) =>
                 setHoursEvidenceForm({
@@ -62,9 +94,14 @@ export default function HoursEvidenceModal({
           </div>
 
           <div>
-            <label className={labelClass}>Horas</label>
+            {errors.horas && (
+              <span className={requiredTextClass()}>Campo obligatorio</span>
+            )}
+            <label className={labelClass()}>
+              Horas <span className="text-red-500">*</span>
+            </label>
             <input
-              className={inputClass}
+              className={fieldClass(errors.horas)}
               type="number"
               step="0.01"
               min="0"
@@ -79,9 +116,14 @@ export default function HoursEvidenceModal({
           </div>
 
           <div>
-            <label className={labelClass}>Sesiones</label>
+            {errors.sesiones && (
+              <span className={requiredTextClass()}>Campo obligatorio</span>
+            )}
+            <label className={labelClass()}>
+              Sesiones <span className="text-red-500">*</span>
+            </label>
             <input
-              className={inputClass}
+              className={fieldClass(errors.sesiones)}
               type="number"
               min="0"
               value={hoursEvidenceForm.sesiones}
@@ -98,7 +140,7 @@ export default function HoursEvidenceModal({
         <div className="flex gap-3 pt-2">
           <button
             type="button"
-            onClick={onClose}
+            onClick={resetAndClose}
             className="px-4 py-2 rounded-xl bg-slate-100"
           >
             Cancelar
