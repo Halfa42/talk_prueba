@@ -6,9 +6,14 @@ export default function DashboardSection({
   beneficiarios,
   tutores,
   asignaciones,
+  hoursEvidence,
   softCard,
   setOrgModule,
 }) {
+  const totalHorasAcumuladas = (hoursEvidence || [])
+    .reduce((acc, registro) => acc + Number(registro.horas || 0), 0)
+    .toFixed(0);
+
   return (
     <div className="space-y-6">
       <div className="grid md:grid-cols-3 gap-4">
@@ -22,9 +27,7 @@ export default function DashboardSection({
         />
         <KpiCard
           title="Horas acumuladas"
-          value={`${tutores
-            .reduce((acc, tutor) => acc + Number(tutor.horas_acumuladas || 0), 0)
-            .toFixed(0)} h`}
+          value={`${totalHorasAcumuladas} h`}
         />
       </div>
 

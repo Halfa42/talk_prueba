@@ -1,18 +1,18 @@
-import React, { useState } from 'react';
-import axios from 'axios';
-import { Eye, EyeOff } from 'lucide-react';
+import React, { useState } from "react";
+import axios from "axios";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function HomeLogin({ setAppScreen, setRoleView }) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async () => {
-    setError('');
+    setError("");
 
     try {
-      const response = await axios.post('http://localhost:3000/api/auth/login', {
+      const response = await axios.post("http://localhost:3000/api/auth/login", {
         correo: email,
         contrasena: password,
       });
@@ -20,23 +20,23 @@ export default function HomeLogin({ setAppScreen, setRoleView }) {
       const { token, user } = response.data;
       const rol = user?.rol;
 
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
 
-      if (rol === 'tutor') {
-        setAppScreen('app');
-        setRoleView('tutor');
-      } else if (rol === 'beneficiario') {
-        setAppScreen('app');
-        setRoleView('student');
-      } else if (rol === 'socio_formador') {
-        setAppScreen('app');
-        setRoleView('org');
+      if (rol === "tutor") {
+        setAppScreen("app");
+        setRoleView("tutor");
+      } else if (rol === "beneficiario") {
+        setAppScreen("app");
+        setRoleView("student");
+      } else if (rol === "socio_formador") {
+        setAppScreen("app");
+        setRoleView("org");
       } else {
-        setError('Rol no reconocido');
+        setError("Rol no reconocido");
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'No se pudo iniciar sesión');
+      setError(err.response?.data?.message || "No se pudo iniciar sesión");
     }
   };
 
@@ -80,7 +80,7 @@ export default function HomeLogin({ setAppScreen, setRoleView }) {
             <input
               className="w-full rounded-2xl border border-slate-300 px-4 py-3 pr-12"
               placeholder="Contraseña"
-              type={showPassword ? 'text' : 'password'}
+              type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
@@ -89,7 +89,7 @@ export default function HomeLogin({ setAppScreen, setRoleView }) {
               type="button"
               onClick={() => setShowPassword((prev) => !prev)}
               className="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-500 hover:text-slate-700"
-              aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+              aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>

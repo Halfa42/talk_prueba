@@ -168,14 +168,14 @@ export default function OrgView({ onLogout }) {
   }, []);
 
   useEffect(() => {
-  if (!statusMessage) return;
+    if (!statusMessage) return;
 
-  const timer = setTimeout(() => {
-    setStatusMessage("");
-  }, 3000);
+    const timer = setTimeout(() => {
+      setStatusMessage("");
+    }, 3000);
 
-  return () => clearTimeout(timer);
-}, [statusMessage]);
+    return () => clearTimeout(timer);
+  }, [statusMessage]);
 
   const resetBeneficiaryForm = () => {
     setBeneficiaryForm({
@@ -617,6 +617,7 @@ export default function OrgView({ onLogout }) {
           beneficiarios={beneficiarios}
           tutores={tutores}
           asignaciones={asignaciones}
+          hoursEvidence={hoursEvidence}
           softCard={softCard}
           setOrgModule={setOrgModule}
         />
@@ -726,14 +727,14 @@ export default function OrgView({ onLogout }) {
   };
 
   return (
-    <div className="flex min-h-[760px] bg-slate-50">
+    <div className="flex min-h-screen w-full bg-slate-100">
       <SocioSidebar
         orgModule={orgModule}
         setOrgModule={setOrgModule}
         onLogout={onLogout}
       />
 
-      <main className="flex-1 p-6 space-y-6">
+      <main className="flex-1 min-h-screen p-6 space-y-6 bg-slate-100">
         {statusMessage && (
           <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm">
             {statusMessage}

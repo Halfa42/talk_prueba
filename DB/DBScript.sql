@@ -323,255 +323,135 @@ CREATE INDEX idx_horas_evidencias_tutor      ON horas_evidencias(id_tutor);
 
 WITH nuevo_tutor_1 AS (
     INSERT INTO usuario (
-        nombre,
-        apellido_paterno,
-        apellido_materno,
-        correo,
-        contrasena,
-        rol,
-        estatus
+        nombre, apellido_paterno, apellido_materno, correo, contrasena, rol, estatus
     )
     VALUES (
-        'Tutor',
-        'Prueba',
-        'Talk',
-        'tutor@talk.com',
+        'Tutor','Prueba','Talk','tutor@talk.com',
         '$2a$12$nug2/tHzcOCOHwGLmm9/RudnXfahb1GYmjQfoIa8WCPnQRhayIz7.',
-        'tutor',
-        'activo'
+        'tutor','activo'
     )
     RETURNING id_usuario
 )
 INSERT INTO tutortec (
-    id_usuario,
-    idioma,
-    periodo,
-    fecha_inicio,
-    fecha_fin,
-    horas_acumuladas
+    id_usuario, idioma, periodo, fecha_inicio, fecha_fin, horas_acumuladas
 )
 SELECT
-    id_usuario,
-    'ingles',
-    'Enero-Junio',
-    CURRENT_DATE,
-    CURRENT_DATE + INTERVAL '120 days',
-    41
+    id_usuario, 'ingles', 'Enero-Junio', CURRENT_DATE, CURRENT_DATE + INTERVAL '120 days', 41
 FROM nuevo_tutor_1;
 
 WITH nuevo_tutor_2 AS (
     INSERT INTO usuario (
-        nombre,
-        apellido_paterno,
-        apellido_materno,
-        correo,
-        contrasena,
-        rol,
-        estatus
+        nombre, apellido_paterno, apellido_materno, correo, contrasena, rol, estatus
     )
     VALUES (
-        'Alejandro',
-        'Cuevas',
-        'Talk',
-        'alejandro.cuevas@talk.com',
+        'Alejandro','Cuevas','Talk','alejandro.cuevas@talk.com',
         '$2a$12$nug2/tHzcOCOHwGLmm9/RudnXfahb1GYmjQfoIa8WCPnQRhayIz7.',
-        'tutor',
-        'activo'
+        'tutor','activo'
     )
     RETURNING id_usuario
 )
 INSERT INTO tutortec (
-    id_usuario,
-    idioma,
-    periodo,
-    fecha_inicio,
-    fecha_fin,
-    horas_acumuladas
+    id_usuario, idioma, periodo, fecha_inicio, fecha_fin, horas_acumuladas
 )
 SELECT
-    id_usuario,
-    'frances',
-    'Agosto-Diciembre',
-    CURRENT_DATE,
-    CURRENT_DATE + INTERVAL '120 days',
-    36
+    id_usuario, 'frances', 'Agosto-Diciembre', CURRENT_DATE, CURRENT_DATE + INTERVAL '120 days', 36
 FROM nuevo_tutor_2;
 
 WITH nuevo_beneficiario_1 AS (
     INSERT INTO usuario (
-        nombre,
-        apellido_paterno,
-        apellido_materno,
-        correo,
-        contrasena,
-        rol,
-        estatus
+        nombre, apellido_paterno, apellido_materno, correo, contrasena, rol, estatus
     )
     VALUES (
-        'Beneficiario',
-        'Prueba',
-        'Talk',
-        'beneficiario@talk.com',
+        'Beneficiario','Prueba','Talk','beneficiario@talk.com',
         '$2a$12$jiqBFGF3.ryGGV4E5hbYL.asDHVdtJM7xN4piUI5aj.q3/5NPgeSW',
-        'beneficiario',
-        'activo'
+        'beneficiario','activo'
     )
     RETURNING id_usuario
 )
 INSERT INTO beneficiario (
-    id_usuario,
-    matricula_folio,
-    nivel,
-    idioma
+    id_usuario, matricula_folio, nivel, idioma
 )
 SELECT
-    id_usuario,
-    'MAT-0001',
-    'A1',
-    'ingles'
+    id_usuario, 'MAT-0001', 'A1', 'ingles'
 FROM nuevo_beneficiario_1;
 
 WITH nuevo_beneficiario_2 AS (
     INSERT INTO usuario (
-        nombre,
-        apellido_paterno,
-        apellido_materno,
-        correo,
-        contrasena,
-        rol,
-        estatus
+        nombre, apellido_paterno, apellido_materno, correo, contrasena, rol, estatus
     )
     VALUES (
-        'Alumno1',
-        'Perez',
-        'Lopez',
-        'alumno1@talk.com',
+        'Alumno1','Perez','Lopez','alumno1@talk.com',
         '$2a$12$jiqBFGF3.ryGGV4E5hbYL.asDHVdtJM7xN4piUI5aj.q3/5NPgeSW',
-        'beneficiario',
-        'activo'
+        'beneficiario','activo'
     )
     RETURNING id_usuario
 )
 INSERT INTO beneficiario (
-    id_usuario,
-    matricula_folio,
-    nivel,
-    idioma
+    id_usuario, matricula_folio, nivel, idioma
 )
 SELECT
-    id_usuario,
-    'A01270001',
-    'A2',
-    'frances'
+    id_usuario, 'A01270001', 'A2', 'frances'
 FROM nuevo_beneficiario_2;
 
 WITH nuevo_socio_formador AS (
     INSERT INTO usuario (
-        nombre,
-        apellido_paterno,
-        apellido_materno,
-        correo,
-        contrasena,
-        rol,
-        estatus
+        nombre, apellido_paterno, apellido_materno, correo, contrasena, rol, estatus
     )
     VALUES (
-        'Socio',
-        'Formador',
-        'Talk',
-        'socio_formador@talk.com',
+        'Socio','Formador','Talk','socio_formador@talk.com',
         '$2a$12$5uL20rWrwL6CGvv6b22v3eeWBR.9/XEDB7FHZj.mrWPSR/zNF7g66',
-        'socio_formador',
-        'activo'
+        'socio_formador','activo'
     )
     RETURNING id_usuario
 )
 INSERT INTO socio_formador (
-    id_usuario,
-    cargo,
-    area
+    id_usuario, cargo, area
 )
 SELECT
-    id_usuario,
-    'Coordinador',
-    'Vinculacion'
+    id_usuario, 'Coordinador', 'Vinculacion'
 FROM nuevo_socio_formador;
 
 INSERT INTO usuario (
-    nombre,
-    apellido_paterno,
-    apellido_materno,
-    correo,
-    contrasena,
-    rol,
-    estatus
+    nombre, apellido_paterno, apellido_materno, correo, contrasena, rol, estatus
 )
 VALUES (
-    'Revisor',
-    'Prueba',
-    'Talk',
-    'revisor@talk.com',
+    'Revisor','Prueba','Talk','revisor@talk.com',
     '$2a$12$x9iWO/XvleFX8WyDSPzJ2OJ9F344UH1bOv2uDAYqwP99mo.zn5H.2',
-    'revisor',
-    'activo'
+    'revisor','activo'
 );
 
 INSERT INTO asignacion (
-    id_tutor,
-    id_beneficiario,
-    idioma,
-    periodo,
-    fecha_inicio,
-    fecha_fin,
-    estatus
+    id_tutor, id_beneficiario, idioma, periodo, fecha_inicio, fecha_fin, estatus
 )
 VALUES
 (1, 1, 'ingles', 'Enero-Junio', CURRENT_DATE, CURRENT_DATE + INTERVAL '120 days', 'Activa'),
 (2, 2, 'frances', 'Agosto-Diciembre', CURRENT_DATE, CURRENT_DATE + INTERVAL '120 days', 'Activa');
 
 INSERT INTO avance (
-    id_beneficiario,
-    score_diagnostico,
-    nivel_diagnostico
+    id_beneficiario, score_diagnostico, nivel_diagnostico
 )
 VALUES
 (1, 75, 'A1'),
 (2, 82, 'A2');
 
 INSERT INTO seguimiento_tutor (
-    id_tutor,
-    observacion,
-    estatus
+    id_tutor, observacion, estatus
 )
 VALUES
 (1, 'Seguimiento inicial del tutor de prueba.', 'registrado'),
 (2, 'Revisar asistencia y avance del alumno asignado.', 'registrado');
 
 INSERT INTO horas_evidencias (
-    id_tutor,
-    horas,
-    sesiones,
-    estado
+    id_tutor, horas, sesiones, estado
 )
 VALUES
 (1, 41.00, 28, 'Validado'),
 (2, 36.00, 22, 'Pendiente');
 
 INSERT INTO material (
-    id_asignacion,
-    titulo,
-    tema,
-    nivel,
-    descripcion,
-    archivo_nombre,
-    archivo_tipo,
-    archivo_tamano,
-    archivo_url,
-    nombre_archivo_original,
-    nombre_archivo_guardado,
-    ruta_archivo,
-    mime_type,
-    tamano_bytes
+    id_asignacion, titulo, tema, nivel, descripcion,
+    archivo_nombre, archivo_tipo, archivo_tamano, archivo_url,
+    nombre_archivo_original, nombre_archivo_guardado, ruta_archivo, mime_type, tamano_bytes
 )
 VALUES
 (
@@ -608,14 +488,7 @@ VALUES
 );
 
 INSERT INTO sesion (
-    id_asignacion,
-    fecha_sesion,
-    hora_inicio,
-    hora_fin,
-    tema,
-    observaciones,
-    asistencia,
-    horas_registradas
+    id_asignacion, fecha_sesion, hora_inicio, hora_fin, tema, observaciones, asistencia, horas_registradas
 )
 VALUES
 (
@@ -640,33 +513,14 @@ VALUES
 );
 
 INSERT INTO bitacora (
-    id_sesion,
-    tipo,
-    descripcion,
-    archivo_url
+    id_sesion, tipo, descripcion, archivo_url
 )
 VALUES
-(
-    1,
-    'registro',
-    'Bitácora inicial de la sesión de prueba.',
-    NULL
-),
-(
-    2,
-    'registro',
-    'Bitácora de seguimiento de sesión del segundo alumno.',
-    NULL
-);
+(1, 'registro', 'Bitácora inicial de la sesión de prueba.', NULL),
+(2, 'registro', 'Bitácora de seguimiento de sesión del segundo alumno.', NULL);
 
 INSERT INTO tarea (
-    id_asignacion,
-    titulo,
-    descripcion,
-    fecha_asignacion,
-    fecha_limite,
-    archivo_apoyo,
-    estatus
+    id_asignacion, titulo, descripcion, fecha_asignacion, fecha_limite, archivo_apoyo, estatus
 )
 VALUES
 (
@@ -689,29 +543,10 @@ VALUES
 );
 
 INSERT INTO entrega (
-    id_tarea,
-    fecha_entrega,
-    archivo_entregado,
-    comentario_entrega,
-    calificacion,
-    retroalimentacion
+    id_tarea, fecha_entrega, archivo_entregado, comentario_entrega, calificacion, retroalimentacion
 )
 VALUES
-(
-    1,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL
-),
-(
-    2,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL
-);
+(1, NULL, NULL, NULL, NULL, NULL),
+(2, NULL, NULL, NULL, NULL, NULL);
 
 COMMIT;
