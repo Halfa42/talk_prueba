@@ -117,7 +117,8 @@ function SessionMainPanel({ softCard, sessionTab, selectedStudent }) {
   useEffect(() => {
     const loadZoomLink = async () => {
       try {
-        const tutorId = 1;
+        const userContext = JSON.parse(localStorage.getItem("user") || "{}");
+        const tutorId = userContext.id_tutor || userContext.id_usuario;
 
         const res = await fetch(
           `http://localhost:3000/api/zoom-link/${tutorId}`,

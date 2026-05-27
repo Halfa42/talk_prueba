@@ -22,12 +22,18 @@ function getNextDateForDay(targetDay) {
   return next.toISOString().split('T')[0];
 }
 
+async function getRealTutorId(providedId) {
+  if (!providedId) return null;
+  const res = await query('SELECT id_tutor FROM tutortec WHERE id_tutor = $1 OR id_usuario = $1 LIMIT 1', [providedId]);
+  return res.rows.length > 0 ? res.rows[0].id_tutor : providedId;
+}
+
 const getTutorDashboardSummary = async (req, res) => {
   try {
-    const tutorId = Number(req.params.tutorId);
-    if (!Number.isInteger(tutorId) || tutorId <= 0) {
-      return res.status(400).json({ message: 'tutorId invalido' });
-    }
+    const rawId = Number(req.params.tutorId);
+    if (!Number.isInteger(rawId) || rawId <= 0) return res.status(400).json({ message: 'tutorId invalido' });
+    
+    const tutorId = await getRealTutorId(rawId);
 
     const [pendingReviews, accumulatedHours] = await Promise.all([
       query(
@@ -60,10 +66,10 @@ const getTutorDashboardSummary = async (req, res) => {
 
 const getTutorCalendar = async (req, res) => {
   try {
-    const tutorId = Number(req.params.tutorId);
-    if (!Number.isInteger(tutorId) || tutorId <= 0) {
-      return res.status(400).json({ message: 'tutorId invalido' });
-    }
+    const rawId = Number(req.params.tutorId);
+    if (!Number.isInteger(rawId) || rawId <= 0) return res.status(400).json({ message: 'tutorId invalido' });
+    
+    const tutorId = await getRealTutorId(rawId);
 
     const result = await query(
       `SELECT 
@@ -105,38 +111,23 @@ const getTutorCalendar = async (req, res) => {
 
 const createCalendarSession = async (req, res) => {
   try {
-    const tutorId = Number(req.params.tutorId);
+    const rawId = Number(req.params.tutorId);
+    const tutorId = await getRealTutorId(rawId);
     const { id_asignacion, dia_semana, hora_inicio, hora_fin } = req.body;
 
     const idAsignacion = Number(id_asignacion);
     const dayNumber = Number(dia_semana);
 
-    if (!Number.isInteger(tutorId) || tutorId <= 0) {
-      return res.status(400).json({ message: 'tutorId invalido' });
-    }
-
-    if (!Number.isInteger(idAsignacion) || idAsignacion <= 0) {
-      return res.status(400).json({ message: 'id_asignacion invalido' });
-    }
-
-    if (!Number.isInteger(dayNumber) || dayNumber < 0 || dayNumber > 6) {
-      return res.status(400).json({ message: 'dia_semana invalido (0-6)' });
-    }
-
-    if (!hora_inicio || !hora_fin) {
-      return res.status(400).json({ message: 'hora_inicio y hora_fin son requeridos' });
-    }
+    if (!Number.isInteger(rawId) || rawId <= 0) return res.status(400).json({ message: 'tutorId invalido' });
+    if (!Number.isInteger(idAsignacion) || idAsignacion <= 0) return res.status(400).json({ message: 'id_asignacion invalido' });
+    if (!Number.isInteger(dayNumber) || dayNumber < 0 || dayNumber > 6) return res.status(400).json({ message: 'dia_semana invalido (0-6)' });
+    if (!hora_inicio || !hora_fin) return res.status(400).json({ message: 'hora_inicio y hora_fin son requeridos' });
 
     const startMinutes = timeToMinutes(hora_inicio);
     const endMinutes = timeToMinutes(hora_fin);
 
-    if (startMinutes === null || endMinutes === null) {
-      return res.status(400).json({ message: 'Formato de hora invalido. Usa HH:MM' });
-    }
-
-    if (endMinutes <= startMinutes) {
-      return res.status(400).json({ message: 'La hora_fin debe ser mayor que hora_inicio' });
-    }
+    if (startMinutes === null || endMinutes === null) return res.status(400).json({ message: 'Formato de hora invalido. Usa HH:MM' });
+    if (endMinutes <= startMinutes) return res.status(400).json({ message: 'La hora_fin debe ser mayor que hora_inicio' });
 
     const asignacionValidation = await query(
       'SELECT id_asignacion FROM asignacion WHERE id_asignacion = $1 AND id_tutor = $2',
@@ -165,16 +156,12 @@ const createCalendarSession = async (req, res) => {
 
 const deleteCalendarSession = async (req, res) => {
   try {
-    const tutorId = Number(req.params.tutorId);
+    const rawId = Number(req.params.tutorId);
+    const tutorId = await getRealTutorId(rawId);
     const sessionId = Number(req.params.sessionId);
 
-    if (!Number.isInteger(tutorId) || tutorId <= 0) {
-      return res.status(400).json({ message: 'tutorId invalido' });
-    }
-
-    if (!Number.isInteger(sessionId) || sessionId <= 0) {
-      return res.status(400).json({ message: 'sessionId invalido' });
-    }
+    if (!Number.isInteger(rawId) || rawId <= 0) return res.status(400).json({ message: 'tutorId invalido' });
+    if (!Number.isInteger(sessionId) || sessionId <= 0) return res.status(400).json({ message: 'sessionId invalido' });
 
     const result = await query(
       `DELETE FROM sesion s
@@ -200,10 +187,10 @@ const deleteCalendarSession = async (req, res) => {
 
 const getTutorHours = async (req, res) => {
   try {
-    const tutorId = Number(req.params.tutorId);
-    if (!Number.isInteger(tutorId) || tutorId <= 0) {
-      return res.status(400).json({ message: 'tutorId invalido' });
-    }
+    const rawId = Number(req.params.tutorId);
+    if (!Number.isInteger(rawId) || rawId <= 0) return res.status(400).json({ message: 'tutorId invalido' });
+    
+    const tutorId = await getRealTutorId(rawId);
 
     const [totalsResult, sessionsResult] = await Promise.all([
       query(

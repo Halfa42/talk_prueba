@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   GraduationCap,
@@ -11,7 +12,14 @@ import {
   LogOut,
 } from "lucide-react";
 
-export default function SocioSidebar({ orgModule, setOrgModule, onLogout }) {
+export default function SocioSidebar({ orgModule, setOrgModule }) {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate("/");
+  };
+
   const menuClass = (active) =>
     `w-full flex items-center gap-3 text-left px-4 py-3 rounded-2xl text-sm border transition ${
       active
@@ -80,7 +88,7 @@ export default function SocioSidebar({ orgModule, setOrgModule, onLogout }) {
       </div>
 
       <button
-        onClick={onLogout}
+        onClick={handleLogout}
         className="w-full flex items-center gap-3 text-left px-4 py-3 rounded-2xl text-sm border border-red-200 text-red-600 hover:bg-red-50 transition"
       >
         <LogOut size={18} /> Cerrar sesión

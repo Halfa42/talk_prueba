@@ -48,9 +48,17 @@ app.get("/api/db-check", handleDbCheck);
 
 const authRoutes = require("./routes/auth");
 const orgRoutes = require("./routes/org");
+const zoomRoutes = require("./routes/zoom");
+
+const dashboardRoutes = require("./routes/dashboard");
+const tutorStudentRoutes = require("./routes/TutorStudents");
 
 app.use("/api/auth", authRoutes);
 app.use("/api/org", orgRoutes);
+
+app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/tutor-students", tutorStudentRoutes);
+app.use("/api/zoom-link", zoomRoutes);
 
 app.listen(3000, () => {
   console.log("Servidor en http://localhost:3000");

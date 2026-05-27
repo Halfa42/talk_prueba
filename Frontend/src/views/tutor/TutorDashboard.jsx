@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import React, { useEffect, useState } from "react";
 import { Users, FolderOpen, ClipboardList, Clock3 } from "lucide-react";
 import KpiCard from "../../components/KpiCard";
 import "../../styles/tutor/TutorDashboard.css";
@@ -12,7 +11,8 @@ const quickActions = [
 ];
 
 export default function TutorDashboard({ softCard, onModuleChange }) {
-  const tutorId = 1;
+  const userContext = JSON.parse(localStorage.getItem("user") || "{}");
+  const tutorId = userContext.id_tutor || userContext.id_usuario;
   const [showZoomModal, setShowZoomModal] = useState(false);
   const [zoomLink, setZoomLink] = useState("");
   const [zoomMsg, setZoomMsg] = useState(null);
@@ -55,6 +55,20 @@ export default function TutorDashboard({ softCard, onModuleChange }) {
   };
 
   const loadDashboardData = async () => {
+    const rawUser = localStorage.getItem("user");
+    if (!rawUser) {
+      console.error("No hay usuario en localStorage");
+      return;
+    }
+    
+    const user = JSON.parse(rawUser);
+    const tutorId = user.id_tutor || user.id_usuario;
+
+    if (!tutorId || tutorId === "undefined") {
+      console.error("El tutorId es inválido:", tutorId);
+      return;
+    }
+
     try {
       const [summaryRes, calendarRes, studentsRes] = await Promise.all([
         fetch(`http://localhost:3000/api/dashboard/${tutorId}/summary`),
@@ -82,14 +96,13 @@ export default function TutorDashboard({ softCard, onModuleChange }) {
   const loadZoomLink = async () => {
     try {
       const res = await fetch(`http://localhost:3000/api/zoom-link/${tutorId}`);
-
       const data = await res.json();
-
       setZoomLink(data?.zoom_link || "");
     } catch (error) {
       console.error(error);
     }
   };
+
   const saveZoomLink = async () => {
     try {
       const res = await fetch("http://localhost:3000/api/zoom-link", {
@@ -104,7 +117,6 @@ export default function TutorDashboard({ softCard, onModuleChange }) {
       });
 
       const data = await res.json();
-
       if (!res.ok) throw new Error(data.message);
 
       setZoomMsg({
@@ -274,13 +286,6 @@ export default function TutorDashboard({ softCard, onModuleChange }) {
               >
                 Agregar sesión
               </button>
-              <h3 className="font-semibold text-lg">Calendario</h3>
-              <button
-                onClick={() => setShowAddSession((prev) => !prev)}
-                className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm"
-              >
-                Agregar sesión
-              </button>
             </div>
             {showAddSession && (
               <div className="mb-4 p-4 rounded-xl border bg-slate-50 grid md:grid-cols-4 gap-3">
@@ -352,7 +357,6 @@ export default function TutorDashboard({ softCard, onModuleChange }) {
                   <tr>
                     <th className="text-left p-3">Alumno</th>
                     <th className="text-left p-3">Día</th>
-                    <th className="text-left p-3">Día</th>
                     <th className="text-left p-3">Horario</th>
                     <th className="text-left p-3">Opciones</th>
                   </tr>
@@ -360,7 +364,7 @@ export default function TutorDashboard({ softCard, onModuleChange }) {
                 <tbody>
                   {calendarRows.length === 0 ? (
                     <tr className="border-t border-slate-200 bg-white">
-                      <td className="p-3 text-slate-400" colSpan={3}>
+                      <td className="p-3 text-slate-400" colSpan={4}>
                         Sin sesiones programadas
                       </td>
                     </tr>
@@ -373,21 +377,19 @@ export default function TutorDashboard({ softCard, onModuleChange }) {
                         <td className="p-3">{row.alumno}</td>
                         <td className="p-3">{row.dia}</td>
                         <td className="p-3">
-                          <div className="flex items-center justify-between gap-3">
-                            <span>
-                              {formatTimeAmPm(row.hora_inicio)} -{" "}
-                              {formatTimeAmPm(row.hora_fin)}
-                            </span>
-                            <button
-                              onClick={() => handleDeleteSession(row.id_sesion)}
-                              disabled={deletingSessionId === row.id_sesion}
-                              className="px-3 py-2 rounded-xl bg-red-100 text-red-700 border border-red-200 hover:bg-red-200 transition text-xs"
-                            >
-                              {deletingSessionId === row.id_sesion
-                                ? "Eliminando..."
-                                : "Eliminar"}
-                            </button>
-                          </div>
+                          {formatTimeAmPm(row.hora_inicio)} -{" "}
+                          {formatTimeAmPm(row.hora_fin)}
+                        </td>
+                        <td className="p-3">
+                          <button
+                            onClick={() => handleDeleteSession(row.id_sesion)}
+                            disabled={deletingSessionId === row.id_sesion}
+                            className="px-3 py-2 rounded-xl bg-red-100 text-red-700 border border-red-200 hover:bg-red-200 transition text-xs"
+                          >
+                            {deletingSessionId === row.id_sesion
+                              ? "Eliminando..."
+                              : "Eliminar"}
+                          </button>
                         </td>
                       </tr>
                     ))
