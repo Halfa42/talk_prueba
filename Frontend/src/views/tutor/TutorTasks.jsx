@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import "../../styles/tutor/TutorTasks.css";
 
 const TUTOR_ID = 1; // TODO: obtener dinámicamente si hay login
@@ -95,13 +96,13 @@ export default function TutorTasks({ softCard }) {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold">Tareas y evaluación</h2>
-        <p className="text-sm text-slate-500">
-          Publica actividades y revisa entregas.
-        </p>
+        <p className="text-sm text-slate-500">Publica actividades y revisa entregas.</p>
       </div>
+
       <div className="grid xl:grid-cols-2 gap-6">
         <div className={softCard + " p-5"}>
           <h3 className="font-semibold text-lg mb-4">Asignar tarea</h3>
+
           <input
             className="w-full rounded-xl border border-slate-300 px-4 py-3 mb-3"
             placeholder="Título de la tarea"
@@ -109,6 +110,7 @@ export default function TutorTasks({ softCard }) {
             value={form.titulo}
             onChange={handleChange}
           />
+
           <textarea
             className="w-full rounded-xl border border-slate-300 px-4 py-3 mb-3"
             rows="4"
@@ -117,6 +119,7 @@ export default function TutorTasks({ softCard }) {
             value={form.descripcion}
             onChange={handleChange}
           />
+
           <div className="grid md:grid-cols-2 gap-3">
             <select
               className="rounded-xl border border-slate-300 px-4 py-3 bg-white"
@@ -154,6 +157,7 @@ export default function TutorTasks({ softCard }) {
             <p className={`mt-2 text-sm ${msg.tipo === "ok" ? "text-green-600" : "text-red-600"}`}>{msg.texto}</p>
           )}
         </div>
+
         <div className={softCard + " p-5"}>
           <h3 className="font-semibold text-lg mb-4">Entregas por revisar</h3>
           <div className="space-y-3">

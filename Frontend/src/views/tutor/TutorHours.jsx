@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import "../../styles/tutor/TutorHours.css";
 
 export default function TutorHours({ softCard }) {
@@ -43,9 +44,9 @@ export default function TutorHours({ softCard }) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold">Horas acumuladas</h2>
+        <h2 className="text-2xl font-bold">Horas y evidencias</h2>
         <p className="text-sm text-slate-500">
-          Consulta horas registradas, validadas y pendientes.
+          Consulta tus registros cargados por el socio formador. Esta vista es solo de lectura.
         </p>
       </div>
       <div className={softCard + " p-5"}>
@@ -60,6 +61,7 @@ export default function TutorHours({ softCard }) {
           </div>
         </div>
       </div>
+
       <div className={softCard + " p-5"}>
         <h3 className="font-semibold text-lg mb-4">Historial de horas por sesión</h3>
         {loading ? (

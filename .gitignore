@@ -24,3 +24,9 @@ cypress
 *.njsproj
 *.sln
 *.sw?
+
+
+# Cypress global
+Backend/cypress/
+Backend/cypress/**
+Backend/cypress.config.js
