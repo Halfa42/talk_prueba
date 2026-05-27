@@ -1,0 +1,78 @@
+/* ReviewerTutores.css */
+/* Replicates the Tailwind utility classes used in ReviewerTutores.jsx */
+
+.tutores-grid {
+  display: grid;
+  gap: 1rem; /* gap-4 */
+}
+
+@media (min-width: 768px) {
+  .tutores-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)); /* md:grid-cols-2 */
+  }
+}
+
+@media (min-width: 1280px) {
+  .tutores-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)); /* xl:grid-cols-3 */
+  }
+}
+
+.tutor-card {
+  padding: 1.25rem; /* p-5 */
+}
+
+.tutor-card__header {
+  display: flex;
+  align-items: flex-start; /* items-start */
+  justify-content: space-between; /* justify-between */
+}
+
+
+
+.tutor-card__name {
+  font-weight: 600; /* font-semibold */
+  font-size: 1.125rem; /* text-lg */
+  line-height: 1.75rem;
+}
+
+.tutor-card__detail {
+  font-size: 0.875rem; /* text-sm */
+  line-height: 1.25rem;
+  color: #64748b; /* text-slate-500 */
+  margin-top: 0.25rem; /* mt-1 (first child only — apply selectively if needed) */
+}
+
+.tutor-card__avatar {
+  width: 2.5rem;   /* w-10 */
+  height: 2.5rem;  /* h-10 */
+  border-radius: 1rem; /* rounded-2xl */
+  background-color: #dbeafe; /* bg-blue-100 */
+  color: #1d4ed8;  /* text-blue-700 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600; /* font-semibold */
+  flex-shrink: 0;
+}
+
+.tutor-card__footer {
+  margin-top: 1rem; /* mt-4 */
+}
+
+.tutor-card__status {
+  padding: 0.25rem 0.75rem; /* py-1 px-3 */
+  border-radius: 9999px;    /* rounded-full */
+  font-size: 0.75rem;       /* text-xs */
+  font-weight: 500;         /* font-medium */
+}
+
+.tutor-card__status--active {
+  background-color: #dcfce7; /* bg-green-100 */
+  color: #15803d;            /* text-green-700 */
+}
+
+.tutor-card__status--inactive {
+  background-color: #fee2e2; /* bg-red-100 */
+  color: #b91c1c;            /* text-red-700 */
+}

@@ -153,6 +153,7 @@ CREATE TABLE bitacora (
     tipo          VARCHAR(50),
     descripcion   TEXT,
     archivo_url   VARCHAR(255),
+    revisado      BOOLEAN NOT NULL DEFAULT FALSE,
 
     CONSTRAINT fk_bitacora_sesion
         FOREIGN KEY (id_sesion)
@@ -254,7 +255,7 @@ WITH nuevo_tutor AS (
     RETURNING id_usuario
 )
 INSERT INTO tutortec (id_usuario, idioma, horas_acumuladas)
-SELECT id_usuario, 'espanol', 0
+SELECT id_usuario, 'ingles', 0
 FROM nuevo_tutor;
 
 WITH nuevo_beneficiario AS (
@@ -279,7 +280,7 @@ WITH nuevo_beneficiario AS (
     RETURNING id_usuario
 )
 INSERT INTO beneficiario (id_usuario, matricula_folio, nivel, idioma)
-SELECT id_usuario, 'MAT-0001', 'A1', 'espanol'
+SELECT id_usuario, 'MAT-0001', 'A1', 'ingles'
 FROM nuevo_beneficiario;
 
 WITH nuevo_socio_formador AS (
@@ -322,6 +323,25 @@ VALUES (
     'Talk',
     'revisor@talk.com',
     '$2a$12$x9iWO/XvleFX8WyDSPzJ2OJ9F344UH1bOv2uDAYqwP99mo.zn5H.2',
+    'revisor',
+    'activo'
+);
+
+INSERT INTO usuario (
+    nombre,
+    apellido_paterno,
+    apellido_materno,
+    correo,
+    contrasena,
+    rol,
+    estatus
+)
+VALUES (
+    'Revisor',
+    'Segura',
+    'Romero',
+    'revisor2@talk.com',
+    '$2a$12$90EfVo8DDPZE0sXS5tOON.U0aYSeL003GC2r3ZWcGkLVTJAT5i0JG',
     'revisor',
     'activo'
 );
@@ -413,5 +433,7 @@ ALTER TABLE bitacora
   ALTER TABLE bitacora
   ADD COLUMN imagen_incidencia      BYTEA,
   ADD COLUMN imagen_incidencia_tipo VARCHAR(120);
+    ALTER TABLE bitacora
+    ADD COLUMN comentario_revisor     TEXT;
   
 COMMIT;

@@ -1,0 +1,76 @@
+/* ReviewerSidebar.css */
+
+/* Sidebar container */
+.sidebar {
+  width: 18rem;
+  background-color: #ffffff;
+  border-right: 1px solid #e2e8f0;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Nav items wrapper */
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Shared nav link base */
+.sidebar-link {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-align: left;
+  padding: 0.75rem 1rem;
+  border-radius: 1rem;
+  font-size: 0.875rem;
+  border: 1px solid transparent;
+  background-color: #ffffff;
+  color: #0f172a;
+  text-decoration: none;
+  transition: background-color 0.15s, border-color 0.15s;
+  cursor: pointer;
+}
+
+.sidebar-link:hover {
+  background-color: #f8fafc;
+}
+
+/* Active state (applied via className prop from NavLink) */
+.sidebar-link-active {
+  background-color: #2563eb;
+  color: #ffffff;
+  border-color: #2563eb;
+  font-weight: 500;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar-link-active:hover {
+  background-color: #2563eb;
+}
+
+/* Logout button */
+.sidebar-logout {
+  margin-top: auto;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-align: left;
+  padding: 0.75rem 1rem;
+  border-radius: 1rem;
+  font-size: 0.875rem;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  background-color: #fff1f2;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.sidebar-logout:hover {
+  background-color: #fee2e2;
+}

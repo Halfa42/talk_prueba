@@ -6,6 +6,7 @@ import HomeLogin from "./views/login";
 import TutorView from "./views/tutorview";
 import OrgView from "./views/orgview";
 import StudentView from "./views/studentview";
+import ReviewerView from "./views/reviewer";
 
 const RutaProtegida = ({ children, rolPermitido }) => {
   const token = localStorage.getItem("token");
@@ -52,6 +53,14 @@ export default function App() {
               element={
                 <RutaProtegida rolPermitido="beneficiario">
                   <StudentView />
+                </RutaProtegida>
+              } 
+            />   
+            <Route 
+              path="/revisor/*" 
+              element={
+                <RutaProtegida rolPermitido="revisor">
+                  <ReviewerView />
                 </RutaProtegida>
               } 
             />

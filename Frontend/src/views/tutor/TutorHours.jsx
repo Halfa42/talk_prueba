@@ -5,6 +5,7 @@ export default function TutorHours({ softCard }) {
   const tutorId = 1;
   const [hoursData, setHoursData] = useState({
     horas_registradas: 0,
+    horas_acreditadas: 0,
     horas_validadas: 0,
     pendientes: 0,
     sesiones: [],
@@ -24,6 +25,7 @@ export default function TutorHours({ softCard }) {
         }
         setHoursData({
           horas_registradas: Number(data.horas_registradas || 0),
+          horas_acreditadas: Number(data.horas_acreditadas || 0),
           horas_validadas: Number(data.horas_validadas || 0),
           pendientes: Number(data.pendientes || 0),
           sesiones: Array.isArray(data.sesiones) ? data.sesiones : [],
@@ -53,12 +55,8 @@ export default function TutorHours({ softCard }) {
             <span className="font-semibold">{hoursData.horas_registradas} h</span>
           </div>
           <div className="flex justify-between">
-            <span>Horas validadas</span>
-            <span className="font-semibold">{hoursData.horas_validadas} h</span>
-          </div>
-          <div className="flex justify-between">
-            <span>Pendientes</span>
-            <span className="font-semibold">{hoursData.pendientes} h</span>
+            <span>Horas acreditadas</span>
+            <span className="font-semibold">{hoursData.horas_acreditadas} h</span>
           </div>
         </div>
       </div>

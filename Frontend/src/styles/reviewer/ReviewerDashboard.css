@@ -1,0 +1,96 @@
+/* ReviewerDashboard.css */
+
+/* Page wrapper */
+.dashboard-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Error alert */
+.alert-error {
+  border-radius: 1rem;
+  border: 1px solid #fecaca;
+  background-color: #fff1f2;
+  padding: 1rem;
+  font-size: 0.875rem;
+  color: #b91c1c;
+}
+
+/* KPI grid */
+.kpi-grid {
+  display: grid;
+  gap: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .kpi-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Panel card */
+.panel-card {
+  padding: 1.25rem;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.panel-header h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.panel-header p {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-top: 0.125rem;
+}
+
+/* Quick actions grid */
+.quick-actions-grid {
+  display: grid;
+  gap: 1rem;
+  font-size: 0.875rem;
+}
+
+@media (min-width: 768px) {
+  .quick-actions-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Quick action button */
+.quick-action-btn {
+  padding: 1rem;
+  border-radius: 1rem;
+  border: 1px solid #e2e8f0;
+  background-color: #f8fafc;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.quick-action-btn:hover {
+  border-color: #93c5fd;
+}
+
+.quick-action-icon {
+  margin-bottom: 0.75rem;
+  color: #475569;
+}
+
+.quick-action-title {
+  font-weight: 500;
+  color: #0f172a;
+}
+
+.quick-action-description {
+  color: #64748b;
+  margin-top: 0.25rem;
+}

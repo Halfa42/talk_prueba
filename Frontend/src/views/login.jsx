@@ -31,8 +31,11 @@ export default function HomeLogin() {
         navigate("/org");
       } else if (rol === "beneficiario") {
         navigate("/estudiante");
+      } else if (rol === "revisor" || rol === "reviewer") {
+        navigate("/revisor");
+      } else {
+        navigate("/");
       }
-      
     } catch (error) {
       console.error("Error al iniciar sesión", error);
       setError("Usuario o contraseña incorrectos"); 

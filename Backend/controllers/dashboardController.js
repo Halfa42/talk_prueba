@@ -22,6 +22,45 @@ function getNextDateForDay(targetDay) {
   return next.toISOString().split('T')[0];
 }
 
+function calcularHorasAcreditadas({
+  programa = '1',
+  tipo = '1',
+  sub = '1',
+  horas_trabajadas = 0,
+  cartas = false,
+  video = false,
+  extras = 0,
+  bonus = 0,
+}) {
+  let horas_max = 60;
+  let horas_requeridas_80 = 12;
+
+  if (programa === '2' || programa === 2) {
+    horas_max = 200;
+    if (tipo === '1' || tipo === 1) {
+      horas_requeridas_80 = 58;
+    } else if (tipo === '2' || tipo === 2) {
+      if (sub === '1' || sub === 1) {
+        horas_requeridas_80 = 48;
+      } else {
+        horas_requeridas_80 = 19;
+      }
+    }
+  }
+
+  const horas_80_max = horas_max * 0.8;
+  const horas_bitacoras = horas_trabajadas >= horas_requeridas_80
+    ? horas_80_max
+    : (horas_trabajadas / horas_requeridas_80) * horas_80_max;
+  const horas_cartas = cartas ? horas_max * 0.1 : 0;
+  const horas_video = video ? horas_max * 0.1 : 0;
+  const horas_extras = Math.min(Math.max(Number(extras) || 0, 0), 3) * 5;
+  const horas_totales =
+    horas_bitacoras + horas_cartas + horas_video + horas_extras + Number(bonus || 0);
+
+  return Math.min(horas_totales, horas_max);
+}
+
 const getTutorDashboardSummary = async (req, res) => {
   try {
     const tutorId = Number(req.params.tutorId);
@@ -42,15 +81,20 @@ const getTutorDashboardSummary = async (req, res) => {
         `SELECT COALESCE(SUM(s.horas_registradas), 0)::numeric(10,2) AS total_horas
          FROM sesion s
          INNER JOIN asignacion a ON s.id_asignacion = a.id_asignacion
+         INNER JOIN bitacora b ON b.id_sesion = s.id_sesion AND b.revisado = TRUE
          WHERE a.id_tutor = $1
            AND s.tema IS DISTINCT FROM 'Sesion programada'`,
         [tutorId]
       ),
     ]);
 
+    const horasRegistradas = Number(accumulatedHours.rows[0]?.total_horas || 0);
+    const horasAcreditadas = calcularHorasAcreditadas({ horas_trabajadas: horasRegistradas });
+
     return res.json({
       tareas_por_revisar: pendingReviews.rows[0]?.total || 0,
-      horas_acumuladas: Number(accumulatedHours.rows[0]?.total_horas || 0),
+      horas_acumuladas: horasRegistradas,
+      horas_acreditadas: horasAcreditadas,
     });
   } catch (error) {
     console.error('Error en getTutorDashboardSummary:', error);
@@ -208,11 +252,12 @@ const getTutorHours = async (req, res) => {
     const [totalsResult, sessionsResult] = await Promise.all([
       query(
         `SELECT
-           COALESCE(SUM(s.horas_registradas), 0)::numeric(10,2) AS horas_registradas,
+           COALESCE(SUM(CASE WHEN b.revisado = TRUE THEN s.horas_registradas ELSE 0 END), 0)::numeric(10,2) AS horas_registradas,
            COALESCE(MAX(t.horas_acumuladas), 0)::numeric(10,2) AS horas_validadas
          FROM tutortec t
          LEFT JOIN asignacion a ON a.id_tutor = t.id_tutor
          LEFT JOIN sesion s ON s.id_asignacion = a.id_asignacion
+         LEFT JOIN bitacora b ON b.id_sesion = s.id_sesion
          WHERE t.id_tutor = $1
            AND s.tema IS DISTINCT FROM 'Sesion programada'`,
         [tutorId]
@@ -240,6 +285,7 @@ const getTutorHours = async (req, res) => {
 
     const horasRegistradas = Number(totalsResult.rows[0]?.horas_registradas || 0);
     const horasValidadas = Number(totalsResult.rows[0]?.horas_validadas || 0);
+    const horasAcreditadas = calcularHorasAcreditadas({ horas_trabajadas: horasRegistradas });
     const pendientes = Math.max(0, horasRegistradas - horasValidadas);
 
     const sesiones = sessionsResult.rows.map((row) => ({
@@ -253,6 +299,7 @@ const getTutorHours = async (req, res) => {
     return res.json({
       horas_registradas: horasRegistradas,
       horas_validadas: horasValidadas,
+      horas_acreditadas: horasAcreditadas,
       pendientes,
       sesiones,
     });

@@ -1,0 +1,72 @@
+.beneficiarios-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .beneficiarios-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .beneficiarios-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.beneficiario-card {
+  padding: 1.25rem;
+}
+
+.beneficiario-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.beneficiario-nombre {
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.beneficiario-info {
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.beneficiario-avatar {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 1rem;
+  background-color: #dbeafe;
+  color: #1d4ed8;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-weight: 600;
+}
+
+.beneficiario-status-container {
+  margin-top: 1rem;
+}
+
+.beneficiario-status {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.status-activo {
+  background-color: #dcfce7;
+  color: #15803d;
+}
+
+.status-inactivo {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}

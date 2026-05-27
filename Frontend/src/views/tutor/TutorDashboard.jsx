@@ -225,8 +225,8 @@ export default function TutorDashboard({ softCard, onModuleChange }) {
           value={String(summary.tareas_por_revisar ?? 0)}
         />
         <KpiCard
-          title="Horas acumuladas"
-          value={`${summary.horas_acumuladas ?? 0} h`}
+          title="Horas acreditadas"
+          value={`${summary.horas_acreditadas ?? 0} h`}
         />
       </div>
       <div className="grid xl:grid-cols-3 gap-6">
