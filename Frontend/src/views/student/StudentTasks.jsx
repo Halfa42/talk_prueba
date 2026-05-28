@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Download } from "lucide-react";
 
 export default function StudentTasks({ softCard }) {
   const rawUser = localStorage.getItem("user");
@@ -17,7 +18,7 @@ export default function StudentTasks({ softCard }) {
     fetch(`http://localhost:3000/api/tareas/beneficiario/${usuarioId}`)
       .then(r => r.json())
       .then(data => setTareas(Array.isArray(data) ? data : []))
-      .catch(err => console.error("Error al cargar tareas:", err));
+      .catch(err => console.error(err));
   };
 
   useEffect(() => {
@@ -49,16 +50,14 @@ export default function StudentTasks({ softCard }) {
     }
 
     try {
-      const archivo_entregado = archivo.name; 
+      const formData = new FormData();
+      formData.append("id_tarea", formUpload.id_tarea);
+      formData.append("comentario_entrega", formUpload.comentario);
+      formData.append("archivo_entregado", archivo);
 
       const res = await fetch("http://localhost:3000/api/tareas/entregas", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          id_tarea: formUpload.id_tarea, 
-          comentario_entrega: formUpload.comentario, 
-          archivo_entregado 
-        }),
+        body: formData,
       });
 
       const data = await res.json();
@@ -83,7 +82,6 @@ export default function StudentTasks({ softCard }) {
       </div>
 
       <div className="grid xl:grid-cols-2 gap-6">
-        {/* TABLA DE TAREAS PENDIENTES */}
         <div className={softCard + " p-5 overflow-hidden flex flex-col"}>
           <h3 className="font-semibold text-lg mb-4">Pendientes</h3>
           <div className="overflow-x-auto">
@@ -104,7 +102,6 @@ export default function StudentTasks({ softCard }) {
                   tareas.map(t => (
                     <tr key={t.id_tarea} className="border-b last:border-0 hover:bg-slate-50 transition">
                       <td className="py-3 font-medium flex items-center gap-2">
-                         {/* Indicador visual de si está entregada */}
                         <div className={`w-2 h-2 rounded-full ${t.estatus === 'entregada' ? 'bg-green-500' : 'bg-amber-500'}`}></div>
                         {t.titulo}
                       </td>
@@ -217,12 +214,13 @@ export default function StudentTasks({ softCard }) {
                 <div className="pt-4 border-t mt-4 flex justify-between items-center">
                   <span className="text-sm text-slate-500">Material de apoyo incluido</span>
                   <a 
-                    href={`http://localhost:3000${selectedTarea.archivo_apoyo}`} 
+                    href={`http://localhost:3000/api/tareas/${selectedTarea.id_tarea}/download`} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="px-4 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 border rounded-xl text-sm font-medium transition"
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium transition shadow-sm"
                   >
-                    Descargar Archivo
+                    <Download size={16} />
+                    Descargar Material
                   </a>
                 </div>
               )}

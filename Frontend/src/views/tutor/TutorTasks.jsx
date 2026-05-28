@@ -51,20 +51,31 @@ export default function TutorTasks({ softCard }) {
       return;
     }
     try {
-      let archivo_apoyo = null;
+      const formData = new FormData();
+      formData.append("titulo", form.titulo);
+      formData.append("descripcion", form.descripcion);
+      formData.append("id_asignacion", form.id_asignacion);
+      formData.append("fecha_limite", form.fecha_limite);
+      
       if (archivo) {
-        archivo_apoyo = archivo.name;
+        formData.append("archivo_apoyo", archivo);
       }
+
       const res = await fetch("http://localhost:3000/api/tareas", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, archivo_apoyo }),
+        body: formData,
       });
+      
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
+      
       setMsg({ tipo: "ok", texto: "Tarea publicada correctamente" });
       setForm({ titulo: "", descripcion: "", id_asignacion: "", fecha_limite: "" });
       setArchivo(null);
+      
+      const fileInput = document.querySelector('input[type="file"]');
+      if (fileInput) fileInput.value = "";
+      
       reloadTareas();
     } catch (err) {
       setMsg({ tipo: "error", texto: err.message });
