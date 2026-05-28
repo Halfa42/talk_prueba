@@ -20,14 +20,14 @@ const createTarea = async (req, res) => {
 
 const getTareasByTutor = async (req, res) => {
   try {
-    const { tutorId } = req.params;
+    const tutorId = Number(req.params.tutorId);
     const result = await query(
       `SELECT t.*, b.id_beneficiario, u.nombre, u.apellido_paterno
        FROM tarea t
        INNER JOIN asignacion a ON t.id_asignacion = a.id_asignacion
        INNER JOIN beneficiario b ON a.id_beneficiario = b.id_beneficiario
        INNER JOIN usuario u ON b.id_usuario = u.id_usuario
-       WHERE a.id_tutor = $1
+       WHERE a.id_tutor = $1 OR a.id_tutor = (SELECT id_tutor FROM tutortec WHERE id_usuario = $1 LIMIT 1)
        ORDER BY t.fecha_asignacion DESC, t.id_tarea DESC`,
       [tutorId]
     );
@@ -40,13 +40,13 @@ const getTareasByTutor = async (req, res) => {
 
 const getBeneficiariosByTutor = async (req, res) => {
   try {
-    const { tutorId } = req.params;
+    const tutorId = Number(req.params.tutorId);
     const result = await query(
       `SELECT a.id_asignacion, b.id_beneficiario, u.nombre, u.apellido_paterno
        FROM asignacion a
        INNER JOIN beneficiario b ON a.id_beneficiario = b.id_beneficiario
        INNER JOIN usuario u ON b.id_usuario = u.id_usuario
-       WHERE a.id_tutor = $1`,
+       WHERE a.id_tutor = $1 OR a.id_tutor = (SELECT id_tutor FROM tutortec WHERE id_usuario = $1 LIMIT 1)`,
       [tutorId]
     );
     return res.json(result.rows);
@@ -58,7 +58,7 @@ const getBeneficiariosByTutor = async (req, res) => {
 
 const getEntregasPendientes = async (req, res) => {
   try {
-    const { tutorId } = req.params;
+    const tutorId = Number(req.params.tutorId);
     const result = await query(
       `SELECT e.*, t.titulo, u.nombre, u.apellido_paterno
        FROM entrega e
@@ -66,7 +66,8 @@ const getEntregasPendientes = async (req, res) => {
        INNER JOIN asignacion a ON t.id_asignacion = a.id_asignacion
        INNER JOIN beneficiario b ON a.id_beneficiario = b.id_beneficiario
        INNER JOIN usuario u ON b.id_usuario = u.id_usuario
-       WHERE a.id_tutor = $1 AND (e.calificacion IS NULL OR e.calificacion = 0)
+       WHERE (a.id_tutor = $1 OR a.id_tutor = (SELECT id_tutor FROM tutortec WHERE id_usuario = $1 LIMIT 1)) 
+       AND (e.calificacion IS NULL OR e.calificacion = 0)
        ORDER BY e.fecha_entrega DESC`,
       [tutorId]
     );

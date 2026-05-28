@@ -1,7 +1,12 @@
 const express = require('express');
-const { createTarea, getTareasByTutor, getBeneficiariosByTutor, getEntregasPendientes, deleteTarea } = require('../controllers/tareaController');
-
 const router = express.Router();
+const { 
+  createTarea, 
+  getTareasByTutor, 
+  getBeneficiariosByTutor, 
+  getEntregasPendientes, 
+  deleteTarea 
+} = require('../controllers/tareaController');
 
 router.post('/', createTarea);
 router.get('/bytutor/:tutorId', getTareasByTutor);

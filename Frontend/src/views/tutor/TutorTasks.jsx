@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
 import "../../styles/tutor/TutorTasks.css";
 
-const TUTOR_ID = 1; // TODO: obtener dinámicamente si hay login
-
 export default function TutorTasks({ softCard }) {
+  const rawUser = localStorage.getItem("user");
+  const user = rawUser ? JSON.parse(rawUser) : {};
+  const tutorId = user.id_tutor || user.id_usuario;
+
   const [beneficiarios, setBeneficiarios] = useState([]);
   const [tareas, setTareas] = useState([]);
   const [entregas, setEntregas] = useState([]);
@@ -12,32 +14,34 @@ export default function TutorTasks({ softCard }) {
   const [archivo, setArchivo] = useState(null);
   const [deletingTaskId, setDeletingTaskId] = useState(null);
 
-  useEffect(() => {
-    fetch(`http://localhost:3000/api/tareas/beneficiarios/${TUTOR_ID}`)
+  const loadBeneficiarios = () => {
+    fetch(`http://localhost:3000/api/tareas/beneficiarios/${tutorId}`)
       .then(r => r.json())
-      .then(setBeneficiarios);
-    fetch(`http://localhost:3000/api/tareas/bytutor/${TUTOR_ID}`)
-      .then(r => r.json())
-      .then(setTareas);
-    fetch(`http://localhost:3000/api/tareas/entregas/${TUTOR_ID}`)
-      .then(r => r.json())
-      .then(setEntregas);
-  }, []);
-
-  const handleChange = e => {
-    setForm(f => ({ ...f, [e.target.name]: e.target.value }));
+      .then(data => setBeneficiarios(Array.isArray(data) ? data : []));
   };
 
   const reloadTareas = () => {
-    fetch(`http://localhost:3000/api/tareas/bytutor/${TUTOR_ID}`)
+    fetch(`http://localhost:3000/api/tareas/bytutor/${tutorId}`)
       .then(r => r.json())
-      .then(setTareas);
+      .then(data => setTareas(Array.isArray(data) ? data : []));
   };
 
   const reloadEntregas = () => {
-    fetch(`http://localhost:3000/api/tareas/entregas/${TUTOR_ID}`)
+    fetch(`http://localhost:3000/api/tareas/entregas/${tutorId}`)
       .then(r => r.json())
-      .then(setEntregas);
+      .then(data => setEntregas(Array.isArray(data) ? data : []));
+  };
+
+  useEffect(() => {
+    if (tutorId) {
+      loadBeneficiarios();
+      reloadTareas();
+      reloadEntregas();
+    }
+  }, [tutorId]);
+
+  const handleChange = e => {
+    setForm(f => ({ ...f, [e.target.name]: e.target.value }));
   };
 
   const handlePublicar = async () => {
@@ -49,7 +53,6 @@ export default function TutorTasks({ softCard }) {
     try {
       let archivo_apoyo = null;
       if (archivo) {
-        // Aquí podrías subir el archivo a un endpoint y obtener la URL, o guardar el nombre
         archivo_apoyo = archivo.name;
       }
       const res = await fetch("http://localhost:3000/api/tareas", {
@@ -167,7 +170,7 @@ export default function TutorTasks({ softCard }) {
                 className="p-3 rounded-xl bg-slate-50 border flex items-center justify-between text-sm"
               >
                 <span>{e.titulo} - {e.nombre} {e.apellido_paterno}</span>
-                <button className="px-3 py-2 rounded-xl bg-white border">
+                <button className="px-3 py-2 rounded-xl bg-white border hover:border-blue-300 transition">
                   Calificar
                 </button>
               </div>
