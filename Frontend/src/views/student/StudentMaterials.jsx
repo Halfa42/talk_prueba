@@ -18,9 +18,15 @@ export default function StudentMaterials({ softCard }) {
         const data = await res.json();
         
         if (Array.isArray(data)) {
-          setMaterials(data);
+          // Normalizamos para agrupar A1, a1, b1, B1, etc.
+          const normalizedData = data.map(m => ({
+            ...m,
+            nivel: m.nivel ? m.nivel.toUpperCase() : null
+          }));
           
-          const levels = [...new Set(data.map(m => m.nivel).filter(Boolean))].sort();
+          setMaterials(normalizedData);
+          
+          const levels = [...new Set(normalizedData.map(m => m.nivel).filter(Boolean))].sort();
           setAvailableLevels(levels);
         }
       } catch (error) {
@@ -90,8 +96,9 @@ export default function StudentMaterials({ softCard }) {
                 </p>
               </div>
               
+              {/* Endpoint unificado con el de tutor */}
               <a 
-                href={`http://localhost:3000${material.archivo_url}`} 
+                href={`http://localhost:3000/api/materials/${material.id_material}/download`}
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition text-sm font-medium"

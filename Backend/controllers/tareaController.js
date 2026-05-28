@@ -104,4 +104,54 @@ const deleteTarea = async (req, res) => {
   }
 };
 
-module.exports = { createTarea, getTareasByTutor, getBeneficiariosByTutor, getEntregasPendientes, deleteTarea };
+const getTareasByBeneficiario = async (req, res) => {
+  try {
+    const usuarioId = Number(req.params.usuarioId);
+    const result = await query(
+      `SELECT t.*
+       FROM tarea t
+       INNER JOIN asignacion a ON t.id_asignacion = a.id_asignacion
+       INNER JOIN beneficiario b ON a.id_beneficiario = b.id_beneficiario
+       WHERE b.id_usuario = $1
+       ORDER BY t.fecha_limite ASC`,
+      [usuarioId]
+    );
+    return res.json(result.rows);
+  } catch (error) {
+    console.error('Error en getTareasByBeneficiario:', error);
+    return res.status(500).json({ message: 'Error interno del servidor' });
+  }
+};
+
+const submitEntrega = async (req, res) => {
+  try {
+    const { id_tarea, comentario_entrega, archivo_entregado } = req.body;
+    
+    if (!id_tarea || !archivo_entregado) {
+      return res.status(400).json({ message: 'Seleccionar una tarea y adjuntar un archivo es obligatorio' });
+    }
+
+    const result = await query(
+      `INSERT INTO entrega (id_tarea, fecha_entrega, archivo_entregado, comentario_entrega)
+       VALUES ($1, CURRENT_TIMESTAMP, $2, $3) RETURNING *`,
+      [id_tarea, archivo_entregado, comentario_entrega || '']
+    );
+
+    await query(`UPDATE tarea SET estatus = 'entregada' WHERE id_tarea = $1`, [id_tarea]);
+
+    return res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error('Error en submitEntrega:', error);
+    return res.status(500).json({ message: 'Error al subir la entrega' });
+  }
+};
+
+module.exports = { 
+  createTarea, 
+  getTareasByTutor, 
+  getBeneficiariosByTutor, 
+  getEntregasPendientes, 
+  deleteTarea, 
+  getTareasByBeneficiario, 
+  submitEntrega
+};
