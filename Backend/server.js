@@ -54,6 +54,7 @@ const materialsRoutes = require("./routes/materials");
 const tutorStudentRoutes = require("./routes/TutorStudents");
 const studentDashboardRoutes = require("./routes/studentDashboard");
 const tareasRoutes = require("./routes/tareas");
+const studentProfileRoutes = require("./routes/studentProfile");
 
 app.use("/api/auth", authRoutes);
 app.use("/api/org", orgRoutes);
@@ -63,6 +64,7 @@ app.use("/api/tutor-students", tutorStudentRoutes);
 app.use("/api/zoom-link", zoomRoutes);
 app.use("/api/student-dashboard", studentDashboardRoutes);
 app.use("/api/tareas", tareasRoutes);
+app.use("/api/student-profile", studentProfileRoutes);
 
 app.listen(3000, () => {
   console.log("Servidor en http://localhost:3000");

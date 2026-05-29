@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Eye, EyeOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -9,6 +9,23 @@ export default function HomeLogin() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const rol = localStorage.getItem("rol");
+    
+    if (token && rol) {
+      if (rol === "tutor") {
+        navigate("/tutor");
+      } else if (rol === "beneficiario") {
+        navigate("/estudiante");
+      } else if (rol === "socio_formador") {
+        navigate("/org");
+      } else if (rol === "revisor") {
+        navigate("/revisor");
+      }
+    }
+  }, [navigate]);
 
   const handleLogin = async () => {
     setError("");
@@ -32,6 +49,8 @@ export default function HomeLogin() {
         navigate("/estudiante");
       } else if (rol === "socio_formador") {
         navigate("/org");
+      } else if (rol === "revisor") {
+        navigate("/revisor");
       } else {
         setError("Rol no reconocido");
       }

@@ -1,19 +1,27 @@
 const { query } = require('../Database/index');
+const path = require('path');
+const fs = require('fs');
 
 const createTarea = async (req, res) => {
   try {
-    const { id_asignacion, titulo, descripcion, fecha_limite, archivo_apoyo } = req.body;
+    const { id_asignacion, titulo, descripcion, fecha_limite } = req.body;
+    let archivo_apoyo = req.body.archivo_apoyo || null;
+
+    if (req.file) {
+      archivo_apoyo = `/uploads/tareas/${req.file.filename}`;
+    }
+
     if (!id_asignacion || !titulo) {
       return res.status(400).json({ message: 'id_asignacion y titulo son requeridos' });
     }
     const result = await query(
       `INSERT INTO tarea (id_asignacion, titulo, descripcion, fecha_asignacion, fecha_limite, archivo_apoyo, estatus)
        VALUES ($1, $2, $3, CURRENT_DATE, $4, $5, 'pendiente') RETURNING *`,
-      [id_asignacion, titulo, descripcion || null, fecha_limite || null, archivo_apoyo || null]
+      [id_asignacion, titulo, descripcion || null, fecha_limite || null, archivo_apoyo]
     );
     return res.status(201).json(result.rows[0]);
   } catch (error) {
-    console.error('Error en createTarea:', error);
+    console.error(error);
     return res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
@@ -33,7 +41,7 @@ const getTareasByTutor = async (req, res) => {
     );
     return res.json(result.rows);
   } catch (error) {
-    console.error('Error en getTareasByTutor:', error);
+    console.error(error);
     return res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
@@ -51,7 +59,7 @@ const getBeneficiariosByTutor = async (req, res) => {
     );
     return res.json(result.rows);
   } catch (error) {
-    console.error('Error en getBeneficiariosByTutor:', error);
+    console.error(error);
     return res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
@@ -73,7 +81,7 @@ const getEntregasPendientes = async (req, res) => {
     );
     return res.json(result.rows);
   } catch (error) {
-    console.error('Error en getEntregasPendientes:', error);
+    console.error(error);
     return res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
@@ -99,9 +107,179 @@ const deleteTarea = async (req, res) => {
 
     return res.json({ message: 'Tarea eliminada correctamente' });
   } catch (error) {
-    console.error('Error en deleteTarea:', error);
+    console.error(error);
     return res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
 
-module.exports = { createTarea, getTareasByTutor, getBeneficiariosByTutor, getEntregasPendientes, deleteTarea };
+const getTareasByBeneficiario = async (req, res) => {
+  try {
+    const usuarioId = Number(req.params.usuarioId);
+    const result = await query(
+      `SELECT t.*, e.calificacion, e.retroalimentacion, e.fecha_entrega, e.archivo_entregado
+       FROM tarea t
+       INNER JOIN asignacion a ON t.id_asignacion = a.id_asignacion
+       INNER JOIN beneficiario b ON a.id_beneficiario = b.id_beneficiario
+       LEFT JOIN entrega e ON t.id_tarea = e.id_tarea
+       WHERE b.id_usuario = $1
+       ORDER BY t.fecha_limite ASC`,
+      [usuarioId]
+    );
+    return res.json(result.rows);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Error interno del servidor' });
+  }
+};
+
+const submitEntrega = async (req, res) => {
+  try {
+    const { id_tarea, comentario_entrega } = req.body;
+    let archivo_entregado = req.body.archivo_entregado || null;
+
+    if (req.file) {
+      archivo_entregado = `/uploads/tareas/${req.file.filename}`;
+    }
+    
+    if (!id_tarea || !archivo_entregado) {
+      return res.status(400).json({ message: 'Seleccionar una tarea y adjuntar un archivo es obligatorio' });
+    }
+
+    const result = await query(
+      `INSERT INTO entrega (id_tarea, fecha_entrega, archivo_entregado, comentario_entrega)
+       VALUES ($1, CURRENT_TIMESTAMP, $2, $3) RETURNING *`,
+      [id_tarea, archivo_entregado, comentario_entrega || '']
+    );
+
+    await query(`UPDATE tarea SET estatus = 'entregada' WHERE id_tarea = $1`, [id_tarea]);
+
+    return res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Error al subir la entrega' });
+  }
+};
+
+const downloadArchivoApoyo = async (req, res) => {
+  try {
+    const tareaId = Number(req.params.tareaId);
+    
+    const result = await query(
+      'SELECT archivo_apoyo FROM tarea WHERE id_tarea = $1', 
+      [tareaId]
+    );
+
+    if (result.rows.length === 0 || !result.rows[0].archivo_apoyo) {
+      return res.status(404).json({ message: 'Archivo de apoyo no encontrado' });
+    }
+
+    const archivoRuta = result.rows[0].archivo_apoyo;
+    const normalizedPath = archivoRuta.startsWith('/') ? archivoRuta.slice(1) : archivoRuta;
+    const filePath = path.join(__dirname, '..', normalizedPath);
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ message: 'El archivo fisico no existe en el servidor' });
+    }
+
+    const fileBuffer = fs.readFileSync(filePath);
+    const fileName = path.basename(filePath);
+
+    let mimeType = 'application/octet-stream';
+    if (fileName.endsWith('.pdf')) mimeType = 'application/pdf';
+    else if (fileName.endsWith('.png')) mimeType = 'image/png';
+    else if (fileName.endsWith('.jpg') || fileName.endsWith('.jpeg')) mimeType = 'image/jpeg';
+    else if (fileName.endsWith('.doc') || fileName.endsWith('.docx')) mimeType = 'application/msword';
+
+    res.setHeader('Content-Type', mimeType);
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(fileName)}"`);
+
+    return res.send(fileBuffer);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Error interno del servidor al descargar' });
+  }
+};
+
+const downloadArchivoEntregado = async (req, res) => {
+  try {
+    const entregaId = Number(req.params.entregaId);
+    
+    const result = await query(
+      'SELECT archivo_entregado FROM entrega WHERE id_entrega = $1', 
+      [entregaId]
+    );
+
+    if (result.rows.length === 0 || !result.rows[0].archivo_entregado) {
+      return res.status(404).json({ message: 'Archivo de entrega no encontrado' });
+    }
+
+    const archivoRuta = result.rows[0].archivo_entregado;
+    const normalizedPath = archivoRuta.startsWith('/') ? archivoRuta.slice(1) : archivoRuta;
+    const filePath = path.join(__dirname, '..', normalizedPath);
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ message: 'El archivo físico no existe en el servidor' });
+    }
+
+    const fileBuffer = fs.readFileSync(filePath);
+    const fileName = path.basename(filePath);
+
+    let mimeType = 'application/octet-stream';
+    if (fileName.endsWith('.pdf')) mimeType = 'application/pdf';
+    else if (fileName.endsWith('.png')) mimeType = 'image/png';
+    else if (fileName.endsWith('.jpg') || fileName.endsWith('.jpeg')) mimeType = 'image/jpeg';
+    else if (fileName.endsWith('.doc') || fileName.endsWith('.docx')) mimeType = 'application/msword';
+
+    res.setHeader('Content-Type', mimeType);
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(fileName)}"`);
+
+    return res.send(fileBuffer);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Error interno al descargar la entrega' });
+  }
+};
+
+const calificarEntrega = async (req, res) => {
+  try {
+    const entregaId = Number(req.params.entregaId);
+    const { calificacion, retroalimentacion, id_tarea } = req.body;
+
+    if (calificacion === undefined || calificacion === null) {
+      return res.status(400).json({ message: 'La calificación es obligatoria' });
+    }
+
+    const result = await query(
+      `UPDATE entrega 
+       SET calificacion = $1, retroalimentacion = $2 
+       WHERE id_entrega = $3 RETURNING *`,
+      [calificacion, retroalimentacion || '', entregaId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Entrega no encontrada' });
+    }
+
+    if (id_tarea) {
+      await query(`UPDATE tarea SET estatus = 'calificada' WHERE id_tarea = $1`, [id_tarea]);
+    }
+
+    return res.json({ message: 'Entrega calificada con éxito', entrega: result.rows[0] });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Error al calificar la entrega' });
+  }
+};
+
+module.exports = { 
+  createTarea, 
+  getTareasByTutor, 
+  getBeneficiariosByTutor, 
+  getEntregasPendientes, 
+  deleteTarea, 
+  getTareasByBeneficiario, 
+  submitEntrega,
+  downloadArchivoApoyo,
+  downloadArchivoEntregado,
+  calificarEntrega
+};

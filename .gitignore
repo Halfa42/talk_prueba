@@ -30,3 +30,6 @@ cypress
 Backend/cypress/
 Backend/cypress/**
 Backend/cypress.config.js
+
+Backend/uploads/tareas/*
+!Backend/uploads/tareas/.gitkeep
