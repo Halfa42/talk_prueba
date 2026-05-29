@@ -7,9 +7,15 @@ export default function TutorStudents({ softCard, onOpenStudent }) {
   useEffect(() => {
     const fetchStudents = async () => {
       try {
-        const response = await fetch("http://localhost:3000/api/tutor-students?tutorId=1");
+        const userContext = JSON.parse(localStorage.getItem("user") || "{}");
+        const tutorId = userContext.id_tutor || userContext.id_usuario;
+        const response = await fetch(`http://localhost:3000/api/tutor-students?tutorId=${tutorId}`);
         const data = await response.json();
-        setStudents(data);
+        if (Array.isArray(data)) {
+          setStudents(data);
+        } else {
+          setStudents([]);
+        }
       } catch (error) {
         console.error("Error fetching students:", error);
       }

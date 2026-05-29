@@ -1,12 +1,31 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Eye, EyeOff } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
-export default function HomeLogin({ setAppScreen, setRoleView }) {
+export default function HomeLogin() { 
+  const navigate = useNavigate(); 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const rol = localStorage.getItem("rol");
+    
+    if (token && rol) {
+      if (rol === "tutor") {
+        navigate("/tutor");
+      } else if (rol === "beneficiario") {
+        navigate("/estudiante");
+      } else if (rol === "socio_formador") {
+        navigate("/org");
+      } else if (rol === "revisor") {
+        navigate("/revisor");
+      }
+    }
+  }, [navigate]);
 
   const handleLogin = async () => {
     setError("");
@@ -22,16 +41,16 @@ export default function HomeLogin({ setAppScreen, setRoleView }) {
 
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
-
+      localStorage.setItem("rol", rol); 
+      
       if (rol === "tutor") {
-        setAppScreen("app");
-        setRoleView("tutor");
+        navigate("/tutor"); 
       } else if (rol === "beneficiario") {
-        setAppScreen("app");
-        setRoleView("student");
+        navigate("/estudiante");
       } else if (rol === "socio_formador") {
-        setAppScreen("app");
-        setRoleView("org");
+        navigate("/org");
+      } else if (rol === "revisor") {
+        navigate("/revisor");
       } else {
         setError("Rol no reconocido");
       }

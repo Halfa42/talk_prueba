@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import React, { useEffect, useState } from "react";
 import "../../styles/tutor/TutorHours.css";
 
 export default function TutorHours({ softCard }) {
