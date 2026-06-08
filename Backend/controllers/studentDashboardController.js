@@ -19,18 +19,18 @@ const getStudentSummary = async (req, res) => {
       query(`SELECT nivel FROM beneficiario WHERE id_beneficiario = $1`, [beneficiarioId]),
       query(`
         SELECT 
-           COUNT(s.id_sesion)::int AS total_sesiones,
-           COUNT(CASE WHEN LOWER(s.asistencia) = 'asistio' THEN 1 END)::int AS asistidas
-        FROM sesion s
+           COUNT(b.id_bitacora)::int AS total_bitacoras,
+           COUNT(CASE WHEN LOWER(b.tipo) = 'seguimiento' THEN 1 END)::int AS bitacoras_seguimiento
+        FROM bitacora b
+        INNER JOIN sesion s ON b.id_sesion = s.id_sesion
         INNER JOIN asignacion a ON s.id_asignacion = a.id_asignacion
-        WHERE a.id_beneficiario = $1 
-          AND s.asistencia IS NOT NULL 
-          AND s.asistencia != ''
+        WHERE a.id_beneficiario = $1
       `, [beneficiarioId])
     ]);
 
-    const total = kpiAsistencia.rows[0]?.total_sesiones || 0;
-    const asistidas = kpiAsistencia.rows[0]?.asistidas || 0;
+    const total = kpiAsistencia.rows[0]?.total_bitacoras || 0;
+    const asistidas = kpiAsistencia.rows[0]?.bitacoras_seguimiento || 0;
+    
     const porcentajeAsistencia = total > 0 ? Math.round((asistidas / total) * 100) : 100;
 
     return res.json({
@@ -85,7 +85,7 @@ const getUpcomingSessions = async (req, res) => {
        INNER JOIN usuario u ON t.id_usuario = u.id_usuario
        LEFT JOIN tutor_zoom_link zl ON (zl.id_tutor = a.id_tutor OR zl.id_tutor = t.id_usuario)
        WHERE a.id_beneficiario = $1
-         AND (s.tema = 'Sesion programada' OR s.fecha_sesion >= CURRENT_DATE)
+         AND s.tema = 'Sesion programada'
        ORDER BY s.fecha_sesion ASC, s.hora_inicio ASC`,
       [beneficiarioId]
     );

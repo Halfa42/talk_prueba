@@ -160,7 +160,7 @@ export default function AssignmentModal({
               }
             >
               <option value="">Selecciona periodo</option>
-              <option value="Enero-Junio">Enero-Junio</option>
+              <option value="Febrero-Junio">Febrero-Junio</option>
               <option value="Verano">Verano</option>
               <option value="Agosto-Diciembre">Agosto-Diciembre</option>
               <option value="Invierno">Invierno</option>

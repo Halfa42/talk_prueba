@@ -103,7 +103,7 @@ const getTutorDashboardSummary = async (req, res) => {
 
     if (periodo === "Verano" || periodo === "Invierno") {
       horas80Max = 160;
-      horasRequeridas80 = 10 * beneficiarios; 
+      horasRequeridas80 = 58; 
     }
 
     let horasAcreditadas = 0;

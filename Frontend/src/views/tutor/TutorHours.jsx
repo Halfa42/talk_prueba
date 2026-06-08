@@ -55,7 +55,7 @@ export default function TutorHours({ softCard, tutorId }) {
 
     if (periodo === "Verano" || periodo === "Invierno") {
       horas80Max = 160;
-      horasRequeridas80 = 10 * beneficiarios; 
+      horasRequeridas80 = 58; 
     }
 
     if (horasRequeridas80 === 0 || validadas === 0) {

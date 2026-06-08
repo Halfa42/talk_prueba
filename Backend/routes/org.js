@@ -51,7 +51,7 @@ function calcularHorasAcreditadas(validadas, periodo, beneficiarios) {
 
   if (periodo === "Verano" || periodo === "Invierno") {
     horas80Max = 160;
-    horasRequeridas80 = 10 * (beneficiarios || 1);
+    horasRequeridas80 = 58;
   }
 
   if (horasRequeridas80 === 0 || validadas === 0) {
