@@ -130,7 +130,7 @@ export default function TutorHours({ softCard, tutorId }) {
               <tbody className="divide-y divide-slate-200">
                 {currentBitacoras.map((b) => (
                   <tr key={b.id_bitacora} className="hover:bg-slate-50 bg-white">
-                    <td className="p-4">{new Date(b.fecha_sesion).toLocaleDateString()}</td>
+                    <td className="p-4">{b.fecha_sesion_formateada}</td>
                     <td className="p-4 capitalize">{b.tipo}</td>
                     <td className="p-4 font-semibold">{b.horas_calculadas} h</td>
                     <td className="p-4">
@@ -202,7 +202,7 @@ export default function TutorHours({ softCard, tutorId }) {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-slate-500 font-medium">Fecha de Sesión</p>
-                  <p className="text-slate-800">{new Date(selectedBitacora.fecha_sesion).toLocaleDateString()}</p>
+                  <p className="text-slate-800">{selectedBitacora.fecha_sesion_formateada}</p>
                 </div>
                 <div>
                   <p className="text-sm text-slate-500 font-medium">Horas Calculadas</p>

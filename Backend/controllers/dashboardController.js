@@ -232,7 +232,7 @@ const getTutorHours = async (req, res) => {
            t.periodo,
            (SELECT COUNT(DISTINCT id_beneficiario) FROM asignacion WHERE id_tutor = $1) AS beneficiarios,
            COALESCE((
-             SELECT SUM(ROUND(EXTRACT(EPOCH FROM (s.hora_fin - s.hora_inicio))/3600::numeric, 2))
+             SELECT SUM(s.horas_registradas)
              FROM sesion s
              INNER JOIN asignacion a ON s.id_asignacion = a.id_asignacion
              WHERE a.id_tutor = $1 AND s.tema IS DISTINCT FROM 'Sesion programada'
@@ -262,12 +262,13 @@ const getTutorHours = async (req, res) => {
            (b.imagen_incidencia IS NOT NULL) AS tiene_incidencia,
            s.id_sesion,
            s.fecha_sesion,
+           TO_CHAR(s.fecha_sesion, 'DD/MM/YYYY') AS fecha_sesion_formateada,
            s.hora_inicio,
            s.hora_fin,
            s.tema AS tema_sesion,
            tt.id_tutor,
            CONCAT(u.nombre, ' ', u.apellido_paterno) AS tutor,
-           COALESCE(ROUND(EXTRACT(EPOCH FROM (s.hora_fin - s.hora_inicio))/3600::numeric, 2), 0) AS horas_calculadas
+           COALESCE(s.horas_registradas, 0) AS horas_calculadas
          FROM bitacora b
          INNER JOIN sesion s ON b.id_sesion = s.id_sesion
          INNER JOIN asignacion a ON s.id_asignacion = a.id_asignacion

@@ -4,7 +4,7 @@ const createSesion = async (req, res) => {
   try {
     const {
       id_asignacion, fecha_sesion, hora_inicio, hora_fin,
-      tema, observaciones, asistencia, aprobado_padre_madre  // ← add this
+      tema, observaciones, asistencia, aprobado_padre_madre, horas
     } = req.body;
 
     const idAsignacion = Number(id_asignacion);
@@ -13,7 +13,10 @@ const createSesion = async (req, res) => {
     }
 
     let horas_registradas = 0;
-    if (hora_inicio && hora_fin) {
+    
+    if (horas !== undefined && horas !== null) {
+      horas_registradas = Number(horas);
+    } else if (hora_inicio && hora_fin) {
       const [h1, m1] = hora_inicio.split(':').map(Number);
       const [h2, m2] = hora_fin.split(':').map(Number);
       horas_registradas = ((h2 * 60 + m2) - (h1 * 60 + m1)) / 60;
@@ -29,12 +32,12 @@ const createSesion = async (req, res) => {
         idAsignacion, fecha_sesion, hora_inicio || null, hora_fin || null,
         tema || null, observaciones || null, asistencia || null,
         horas_registradas,
-        aprobado_padre_madre ?? null   // ← add this
+        aprobado_padre_madre ?? null
       ]
     );
     return res.status(201).json(result.rows[0]);
   } catch (error) {
-    console.error('Error en createSesion:', error);
+    console.error(error);
     return res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
@@ -50,7 +53,7 @@ const getSesionesByAsignacion = async (req, res) => {
 
     return res.json(result.rows);
   } catch (error) {
-    console.error('Error en getSesionesByAsignacion:', error);
+    console.error(error);
     return res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
