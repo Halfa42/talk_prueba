@@ -69,7 +69,7 @@ const getTutorDashboardSummary = async (req, res) => {
     
     const tutorId = await getRealTutorId(rawId);
 
-    const [pendingReviews, accumulatedHours] = await Promise.all([
+    const [pendingReviews, tutorInfo] = await Promise.all([
       query(
         `SELECT COUNT(*)::int AS total
          FROM entrega e
@@ -79,18 +79,45 @@ const getTutorDashboardSummary = async (req, res) => {
         [tutorId]
       ),
       query(
-        `SELECT COALESCE(SUM(s.horas_registradas), 0)::numeric(10,2) AS total_horas
-         FROM sesion s
-         INNER JOIN asignacion a ON s.id_asignacion = a.id_asignacion
-         WHERE a.id_tutor = $1
-           AND s.tema IS DISTINCT FROM 'Sesion programada'`,
+        `SELECT 
+           t.periodo,
+           (SELECT COUNT(DISTINCT id_beneficiario) FROM asignacion WHERE id_tutor = $1) AS beneficiarios,
+           COALESCE((
+             SELECT SUM(he.horas)
+             FROM horas_evidencias he
+             WHERE he.id_tutor = $1 AND he.estado = 'Validado'
+           ), 0)::numeric(10,2) AS horas_validadas
+         FROM tutortec t
+         WHERE t.id_tutor = $1`,
         [tutorId]
-      ),
+      )
     ]);
+
+    const tutorData = tutorInfo.rows[0] || { periodo: 'Agosto-Diciembre', beneficiarios: 1, horas_validadas: 0 };
+    const validadas = Number(tutorData.horas_validadas);
+    const beneficiarios = Number(tutorData.beneficiarios) || 1;
+    const periodo = tutorData.periodo;
+
+    let horas80Max = 144;
+    let horasRequeridas80 = 28 * beneficiarios;
+
+    if (periodo === "Verano" || periodo === "Invierno") {
+      horas80Max = 160;
+      horasRequeridas80 = 10 * beneficiarios; 
+    }
+
+    let horasAcreditadas = 0;
+    if (horasRequeridas80 > 0 && validadas > 0) {
+      if (validadas >= horasRequeridas80) {
+        horasAcreditadas = horas80Max;
+      } else {
+        horasAcreditadas = Math.round((validadas / horasRequeridas80) * horas80Max);
+      }
+    }
 
     return res.json({
       tareas_por_revisar: pendingReviews.rows[0]?.total || 0,
-      horas_acumuladas: Number(accumulatedHours.rows[0]?.total_horas || 0),
+      horas_acumuladas: horasAcreditadas,
     });
   } catch (error) {
     console.error(error);

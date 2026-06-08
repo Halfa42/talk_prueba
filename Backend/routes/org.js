@@ -45,6 +45,26 @@ function sendCsv(res, filename, headers, rows) {
   res.send(csv);
 }
 
+function calcularHorasAcreditadas(validadas, periodo, beneficiarios) {
+  let horas80Max = 144;
+  let horasRequeridas80 = 28 * (beneficiarios || 1);
+
+  if (periodo === "Verano" || periodo === "Invierno") {
+    horas80Max = 160;
+    horasRequeridas80 = 10 * (beneficiarios || 1);
+  }
+
+  if (horasRequeridas80 === 0 || validadas === 0) {
+    return 0;
+  }
+
+  if (validadas >= horasRequeridas80) {
+    return horas80Max;
+  } else {
+    return Math.round((validadas / horasRequeridas80) * horas80Max);
+  }
+}
+
 const uploadsDir = path.join(__dirname, "..", "uploads", "materiales");
 fs.mkdirSync(uploadsDir, { recursive: true });
 
@@ -944,8 +964,15 @@ router.get("/reportes/tutores", async (req, res) => {
         u.correo,
         u.estatus,
         tt.idioma,
-        COALESCE(SUM(he.horas), 0) AS horas_validadas,
-        COUNT(DISTINCT a.id_asignacion) AS beneficiarios_asignados
+        tt.periodo,
+        COUNT(DISTINCT a.id_asignacion) AS beneficiarios_asignados,
+        COALESCE((
+          SELECT SUM(s.horas_registradas) 
+          FROM sesion s 
+          INNER JOIN asignacion sa ON s.id_asignacion = sa.id_asignacion 
+          WHERE sa.id_tutor = tt.id_tutor AND s.tema IS DISTINCT FROM 'Sesion programada'
+        ), 0) AS horas_registradas,
+        COALESCE(SUM(he.horas), 0) AS horas_validadas
       FROM tutortec tt
       INNER JOIN usuario u ON u.id_usuario = tt.id_usuario
       LEFT JOIN asignacion a ON a.id_tutor = tt.id_tutor
@@ -958,20 +985,29 @@ router.get("/reportes/tutores", async (req, res) => {
         u.apellido_materno,
         u.correo,
         u.estatus,
-        tt.idioma
+        tt.idioma,
+        tt.periodo
       ORDER BY u.nombre ASC, u.apellido_paterno ASC
       `
     );
 
     const headers = [
       "ID Tutor", "Nombre", "Apellido paterno", "Apellido materno", 
-      "Correo", "Estado", "Idioma perfil", "Beneficiarios asignados", "Horas validadas"
+      "Correo", "Estado", "Idioma perfil", "Beneficiarios asignados", "Horas registradas", "Horas validadas", "Horas acreditadas"
     ];
 
-    const rows = result.rows.map((row) => [
-      row.id_tutor, row.nombre, row.apellido_paterno, row.apellido_materno || "",
-      row.correo, row.estatus, row.idioma || "", row.beneficiarios_asignados, row.horas_validadas
-    ]);
+    const rows = result.rows.map((row) => {
+      const validadas = Number(row.horas_validadas);
+      const registradas = Number(row.horas_registradas);
+      const beneficiarios = Number(row.beneficiarios_asignados);
+      const periodo = row.periodo;
+      const horasAcreditadas = calcularHorasAcreditadas(validadas, periodo, beneficiarios);
+
+      return [
+        row.id_tutor, row.nombre, row.apellido_paterno, row.apellido_materno || "",
+        row.correo, row.estatus, row.idioma || "", beneficiarios, registradas, validadas, horasAcreditadas
+      ];
+    });
 
     sendCsv(res, "reporte_tutores.csv", headers, rows);
   } catch (error) {
@@ -990,8 +1026,15 @@ router.get("/reportes/horas", async (req, res) => {
         u.correo,
         u.estatus,
         tt.idioma,
-        COALESCE(SUM(he.horas), 0) AS horas_validadas,
-        COUNT(DISTINCT a.id_asignacion) AS beneficiarios_asignados
+        tt.periodo,
+        COUNT(DISTINCT a.id_asignacion) AS beneficiarios_asignados,
+        COALESCE((
+          SELECT SUM(s.horas_registradas) 
+          FROM sesion s 
+          INNER JOIN asignacion sa ON s.id_asignacion = sa.id_asignacion 
+          WHERE sa.id_tutor = tt.id_tutor AND s.tema IS DISTINCT FROM 'Sesion programada'
+        ), 0) AS horas_registradas,
+        COALESCE(SUM(he.horas), 0) AS horas_validadas
       FROM tutortec tt
       INNER JOIN usuario u ON u.id_usuario = tt.id_usuario
       LEFT JOIN asignacion a ON a.id_tutor = tt.id_tutor
@@ -1003,20 +1046,29 @@ router.get("/reportes/horas", async (req, res) => {
         u.apellido_materno,
         u.correo,
         u.estatus,
-        tt.idioma
+        tt.idioma,
+        tt.periodo
       ORDER BY horas_validadas DESC, tutor ASC
       `
     );
 
     const headers = [
       "ID Tutor", "Tutor", "Correo", "Estado", 
-      "Idioma perfil", "Horas validadas", "Beneficiarios asignados"
+      "Idioma perfil", "Beneficiarios asignados", "Horas registradas", "Horas validadas", "Horas acreditadas"
     ];
 
-    const rows = result.rows.map((row) => [
-      row.id_tutor, row.tutor, row.correo, row.estatus, 
-      row.idioma || "", row.horas_validadas, row.beneficiarios_asignados
-    ]);
+    const rows = result.rows.map((row) => {
+      const validadas = Number(row.horas_validadas);
+      const registradas = Number(row.horas_registradas);
+      const beneficiarios = Number(row.beneficiarios_asignados);
+      const periodo = row.periodo;
+      const horasAcreditadas = calcularHorasAcreditadas(validadas, periodo, beneficiarios);
+
+      return [
+        row.id_tutor, row.tutor, row.correo, row.estatus, 
+        row.idioma || "", beneficiarios, registradas, validadas, horasAcreditadas
+      ];
+    });
 
     sendCsv(res, "reporte_horas_tutores.csv", headers, rows);
   } catch (error) {

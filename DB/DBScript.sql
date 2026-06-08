@@ -413,8 +413,8 @@ WITH nuevo_socio_formador AS (
         nombre, apellido_paterno, apellido_materno, correo, contrasena, rol, estatus
     )
     VALUES (
-        'Socio','Formador','Talk','administrador',
-        'administrador123',
+        'Socio','Formador','Talk','socio_formador@talk.com',
+        '$2a$12$5uL20rWrwL6CGvv6b22v3eeWBR.9/XEDB7FHZj.mrWPSR/zNF7g66',
         'socio_formador','activo'
     )
     RETURNING id_usuario
@@ -455,13 +455,6 @@ INSERT INTO seguimiento_tutor (
 VALUES
 (1, 'Seguimiento inicial del tutor de prueba.', 'registrado'),
 (2, 'Revisar asistencia y avance del alumno asignado.', 'registrado');
-
-INSERT INTO horas_evidencias (
-    id_tutor, horas, sesiones, estado
-)
-VALUES
-(1, 41.00, 28, 'Validado'),
-(2, 36.00, 22, 'Pendiente');
 
 INSERT INTO material (
     id_asignacion, titulo, tema, nivel, descripcion,
@@ -528,11 +521,17 @@ VALUES
 );
 
 INSERT INTO bitacora (
-    id_sesion, tipo, descripcion, archivo_url
+    id_sesion, tipo, descripcion, archivo_url, estatus
 )
 VALUES
-(1, 'registro', 'Bitácora inicial de la sesión de prueba.', NULL),
-(2, 'registro', 'Bitácora de seguimiento de sesión del segundo alumno.', NULL);
+(1, 'registro', 'Bitácora inicial de la sesión de prueba.', NULL, 'aceptada'),
+(2, 'registro', 'Bitácora de seguimiento de sesión del segundo alumno.', NULL, 'sin revisar');
+
+INSERT INTO horas_evidencias (
+    id_tutor, horas, sesiones, estado
+)
+VALUES
+(1, 1.00, 1, 'Validado');
 
 INSERT INTO tarea (
     id_asignacion, titulo, descripcion, fecha_asignacion, fecha_limite, archivo_apoyo, estatus

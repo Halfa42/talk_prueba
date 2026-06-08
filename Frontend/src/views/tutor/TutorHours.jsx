@@ -4,6 +4,7 @@ import "../../styles/tutor/TutorHours.css";
 export default function TutorHours({ softCard, tutorId }) {
   const [hoursData, setHoursData] = useState({
     horas_registradas: 0,
+    horas_validadas: 0,
     pendientes: 0,
     bitacoras: [],
     periodo: "Ago-Dic",
@@ -32,6 +33,7 @@ export default function TutorHours({ softCard, tutorId }) {
         
         setHoursData({
           horas_registradas: Number(data.horas_registradas || 0),
+          horas_validadas: Number(data.horas_validadas || 0),
           pendientes: Number(data.pendientes || 0),
           bitacoras: Array.isArray(data.bitacoras) ? data.bitacoras : [],
           periodo: data.periodo || "Ago-Dic",
@@ -47,7 +49,7 @@ export default function TutorHours({ softCard, tutorId }) {
     loadHours();
   }, [tutorId]);
 
-  const calcularHorasAcreditadas = (registradas, periodo, beneficiarios) => {
+  const calcularHorasAcreditadas = (validadas, periodo, beneficiarios) => {
     let horas80Max = 144;
     let horasRequeridas80 = 28 * beneficiarios;
 
@@ -56,19 +58,19 @@ export default function TutorHours({ softCard, tutorId }) {
       horasRequeridas80 = 10 * beneficiarios; 
     }
 
-    if (horasRequeridas80 === 0 || registradas === 0) {
+    if (horasRequeridas80 === 0 || validadas === 0) {
       return 0;
     }
 
-    if (registradas >= horasRequeridas80) {
+    if (validadas >= horasRequeridas80) {
       return horas80Max;
     } else {
-      return Math.round((registradas / horasRequeridas80) * horas80Max);
+      return Math.round((validadas / horasRequeridas80) * horas80Max);
     }
   };
 
   const horasAcreditadasCalculadas = calcularHorasAcreditadas(
-    hoursData.horas_registradas,
+    hoursData.horas_validadas,
     hoursData.periodo,
     hoursData.beneficiarios
   );
@@ -94,12 +96,16 @@ export default function TutorHours({ softCard, tutorId }) {
       <div className={`${softCard} p-5`}>
         <div className="space-y-3 text-sm">
           <div className="flex justify-between">
-            <span>Horas registradas</span>
-            <span className="font-semibold">{hoursData.horas_registradas} h</span>
+            <span>Horas registradas </span>
+            <span className="font-medium">{hoursData.horas_registradas} h</span>
           </div>
           <div className="flex justify-between">
-            <span>Horas acreditadas (Estimación)</span>
-            <span className="font-semibold text-blue-600">{horasAcreditadasCalculadas} h</span>
+            <span>Horas validadas </span>
+            <span className="font-semibold text-green-600">{hoursData.horas_validadas} h</span>
+          </div>
+          <div className="flex justify-between border-t pt-2 mt-2">
+            <span>Horas acreditadas </span>
+            <span className="font-bold text-blue-600">{horasAcreditadasCalculadas} h</span>
           </div>
         </div>
       </div>
