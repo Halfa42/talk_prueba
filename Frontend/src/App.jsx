@@ -55,7 +55,7 @@ export default function App() {
               } 
             />   
             <Route 
-              path="/revisor/*" 
+              path="/revisor/:tab?" 
               element={
                 <RutaProtegida rolPermitido="revisor">
                   <ReviewerView />
