@@ -1,5 +1,6 @@
 const express = require('express');
 const {
+  getSocioDashboardSummary,
   getTutorDashboardSummary,
   getTutorCalendar,
   createCalendarSession,
@@ -9,6 +10,7 @@ const {
 
 const router = express.Router();
 
+router.get('/socio/summary', getSocioDashboardSummary);
 router.get('/:tutorId/summary', getTutorDashboardSummary);
 router.get('/:tutorId/calendario', getTutorCalendar);
 router.post('/:tutorId/calendario', createCalendarSession);

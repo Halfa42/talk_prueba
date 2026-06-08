@@ -125,6 +125,7 @@ router.get("/beneficiarios-simple", async (req, res) => {
       `
       SELECT
         b.id_beneficiario,
+        b.idioma,
         CONCAT(u.nombre, ' ', u.apellido_paterno) AS nombre
       FROM beneficiario b
       INNER JOIN usuario u
@@ -195,6 +196,8 @@ router.get("/tutores-simple", async (req, res) => {
       `
       SELECT
         tt.id_tutor,
+        tt.idioma,
+        tt.periodo,
         CONCAT(u.nombre, ' ', u.apellido_paterno) AS nombre
       FROM tutortec tt
       INNER JOIN usuario u
@@ -472,6 +475,30 @@ router.post("/seguimiento", async (req, res) => {
   }
 });
 
+router.delete("/seguimiento/:id", async (req, res) => {
+  try {
+    const idSeguimiento = Number(req.params.id);
+
+    if (!idSeguimiento) {
+      return res.status(400).json({ message: "ID inválido." });
+    }
+
+    const result = await query(
+      `DELETE FROM seguimiento_tutor WHERE id_seguimiento = $1 RETURNING id_seguimiento`,
+      [idSeguimiento]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Registro no encontrado." });
+    }
+
+    res.json({ message: "Registro eliminado correctamente." });
+  } catch (error) {
+    console.error("Error al eliminar seguimiento:", error);
+    res.status(500).json({ message: "Error al eliminar seguimiento." });
+  }
+});
+
 router.get("/horas-evidencias", async (req, res) => {
   try {
     const result = await query(
@@ -528,7 +555,7 @@ router.post("/horas-evidencias", async (req, res) => {
         tutorIdNumero,
         horasNumero,
         sesionesNumero,
-        clean(estado) || "Pendiente",
+        clean(estado) || "Validado",
       ]
     );
 
@@ -577,7 +604,7 @@ router.put("/horas-evidencias/:id", async (req, res) => {
         tutorIdNumero,
         horasNumero,
         sesionesNumero,
-        clean(estado) || "Pendiente",
+        clean(estado) || "Validado",
         idRegistro,
       ]
     );
@@ -610,6 +637,136 @@ router.delete("/horas-evidencias/:id", async (req, res) => {
   } catch (error) {
     console.error("Error al eliminar horas y evidencias:", error);
     res.status(500).json({ message: "Error al eliminar el registro." });
+  }
+});
+
+router.get("/bitacoras", async (req, res) => {
+  try {
+    const result = await query(
+      `
+      SELECT
+        b.id_bitacora,
+        b.fecha AS fecha_bitacora,
+        b.hora,
+        b.tema AS tema_bitacora,
+        b.tipo,
+        b.descripcion,
+        b.planeacion_siguiente_sesion,
+        b.tareas_asignadas,
+        b.estatus,
+        (b.imagen_recordatorio IS NOT NULL) AS tiene_recordatorio,
+        (b.imagen_sesion IS NOT NULL) AS tiene_sesion,
+        (b.imagen_incidencia IS NOT NULL) AS tiene_incidencia,
+        s.id_sesion,
+        s.fecha_sesion,
+        s.hora_inicio,
+        s.hora_fin,
+        s.tema AS tema_sesion,
+        tt.id_tutor,
+        CONCAT(u.nombre, ' ', u.apellido_paterno) AS tutor,
+        COALESCE(ROUND(EXTRACT(EPOCH FROM (s.hora_fin - s.hora_inicio))/3600::numeric, 2), 0) AS horas_calculadas
+      FROM bitacora b
+      INNER JOIN sesion s ON b.id_sesion = s.id_sesion
+      INNER JOIN asignacion a ON s.id_asignacion = a.id_asignacion
+      INNER JOIN tutortec tt ON a.id_tutor = tt.id_tutor
+      INNER JOIN usuario u ON tt.id_usuario = u.id_usuario
+      ORDER BY b.fecha DESC
+      `
+    );
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Error al consultar bitacoras:", error);
+    res.status(500).json({ message: "Error al consultar bitácoras." });
+  }
+});
+
+router.get("/bitacoras/:id/imagen/:tipo", async (req, res) => {
+  try {
+    const idBitacora = Number(req.params.id);
+    const tipo = req.params.tipo;
+
+    let colData = "";
+    let colMime = "";
+
+    if (tipo === "recordatorio") {
+      colData = "imagen_recordatorio";
+      colMime = "imagen_recordatorio_tipo";
+    } else if (tipo === "sesion") {
+      colData = "imagen_sesion";
+      colMime = "imagen_sesion_tipo";
+    } else if (tipo === "incidencia") {
+      colData = "imagen_incidencia";
+      colMime = "imagen_incidencia_tipo";
+    } else {
+      return res.status(400).json({ message: "Tipo de imagen inválido." });
+    }
+
+    const result = await query(
+      `SELECT ${colData} AS buffer, ${colMime} AS mime FROM bitacora WHERE id_bitacora = $1`,
+      [idBitacora]
+    );
+
+    if (result.rows.length === 0 || !result.rows[0].buffer) {
+      return res.status(404).send("Imagen no encontrada.");
+    }
+
+    res.set("Content-Type", result.rows[0].mime || "image/jpeg");
+    res.send(result.rows[0].buffer);
+  } catch (error) {
+    console.error("Error al obtener la imagen de la bitácora:", error);
+    res.status(500).send("Error interno del servidor.");
+  }
+});
+
+router.put("/bitacoras/:id/review", async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const idBitacora = Number(req.params.id);
+    const { estatus, tutorId, horas } = req.body;
+
+    const estatusLimpio = clean(estatus).toLowerCase();
+    const tutorIdNumero = Number(tutorId);
+    const horasNumero = Number(horas) || 0;
+
+    if (!idBitacora || !['aceptada', 'rechazada'].includes(estatusLimpio)) {
+      return res.status(400).json({ message: "Datos de revisión inválidos." });
+    }
+
+    await client.query("BEGIN");
+
+    await client.query(
+      `UPDATE bitacora SET estatus = $1 WHERE id_bitacora = $2`,
+      [estatusLimpio, idBitacora]
+    );
+
+    if (estatusLimpio === 'aceptada' && tutorIdNumero > 0) {
+      const horasEvidenciasExistente = await client.query(
+        `SELECT id_registro FROM horas_evidencias WHERE id_tutor = $1 LIMIT 1`,
+        [tutorIdNumero]
+      );
+
+      if (horasEvidenciasExistente.rows.length > 0) {
+        await client.query(
+          `UPDATE horas_evidencias SET horas = horas + $1, sesiones = sesiones + 1 WHERE id_tutor = $2`,
+          [horasNumero, tutorIdNumero]
+        );
+      } else {
+        await client.query(
+          `INSERT INTO horas_evidencias (id_tutor, horas, sesiones, estado) VALUES ($1, $2, 1, 'Validado')`,
+          [tutorIdNumero, horasNumero]
+        );
+      }
+    }
+
+    await client.query("COMMIT");
+    res.json({ message: "Bitácora procesada correctamente." });
+  } catch (error) {
+    await client.query("ROLLBACK");
+    console.error("Error al procesar revisión de bitácora:", error);
+    res.status(500).json({ message: "Error al revisar la bitácora." });
+  } finally {
+    client.release();
   }
 });
 
@@ -787,13 +944,13 @@ router.get("/reportes/tutores", async (req, res) => {
         u.correo,
         u.estatus,
         tt.idioma,
-        tt.horas_acumuladas,
-        COUNT(a.id_asignacion) AS beneficiarios_asignados
+        COALESCE(SUM(he.horas), 0) AS horas_validadas,
+        COUNT(DISTINCT a.id_asignacion) AS beneficiarios_asignados
       FROM tutortec tt
-      INNER JOIN usuario u
-        ON u.id_usuario = tt.id_usuario
-      LEFT JOIN asignacion a
-        ON a.id_tutor = tt.id_tutor
+      INNER JOIN usuario u ON u.id_usuario = tt.id_usuario
+      LEFT JOIN asignacion a ON a.id_tutor = tt.id_tutor
+      LEFT JOIN horas_evidencias he ON he.id_tutor = tt.id_tutor AND he.estado = 'Validado'
+      WHERE u.rol = 'tutor'
       GROUP BY
         tt.id_tutor,
         u.nombre,
@@ -801,40 +958,25 @@ router.get("/reportes/tutores", async (req, res) => {
         u.apellido_materno,
         u.correo,
         u.estatus,
-        tt.idioma,
-        tt.horas_acumuladas
+        tt.idioma
       ORDER BY u.nombre ASC, u.apellido_paterno ASC
       `
     );
 
     const headers = [
-      "ID Tutor",
-      "Nombre",
-      "Apellido paterno",
-      "Apellido materno",
-      "Correo",
-      "Estado",
-      "Idioma perfil",
-      "Beneficiarios asignados",
-      "Horas acumuladas",
+      "ID Tutor", "Nombre", "Apellido paterno", "Apellido materno", 
+      "Correo", "Estado", "Idioma perfil", "Beneficiarios asignados", "Horas validadas"
     ];
 
     const rows = result.rows.map((row) => [
-      row.id_tutor,
-      row.nombre,
-      row.apellido_paterno,
-      row.apellido_materno || "",
-      row.correo,
-      row.estatus,
-      row.idioma || "",
-      row.beneficiarios_asignados,
-      row.horas_acumuladas || 0,
+      row.id_tutor, row.nombre, row.apellido_paterno, row.apellido_materno || "",
+      row.correo, row.estatus, row.idioma || "", row.beneficiarios_asignados, row.horas_validadas
     ]);
 
     sendCsv(res, "reporte_tutores.csv", headers, rows);
   } catch (error) {
     console.error("Error al generar reporte de tutores:", error);
-    res.status(500).json({ message: "Error al generar reporte de tutores." });
+    res.status(500).json({ message: "Error al generar reporte." });
   }
 });
 
@@ -848,13 +990,12 @@ router.get("/reportes/horas", async (req, res) => {
         u.correo,
         u.estatus,
         tt.idioma,
-        tt.horas_acumuladas,
-        COUNT(a.id_asignacion) AS beneficiarios_asignados
+        COALESCE(SUM(he.horas), 0) AS horas_validadas,
+        COUNT(DISTINCT a.id_asignacion) AS beneficiarios_asignados
       FROM tutortec tt
-      INNER JOIN usuario u
-        ON u.id_usuario = tt.id_usuario
-      LEFT JOIN asignacion a
-        ON a.id_tutor = tt.id_tutor
+      INNER JOIN usuario u ON u.id_usuario = tt.id_usuario
+      LEFT JOIN asignacion a ON a.id_tutor = tt.id_tutor
+      LEFT JOIN horas_evidencias he ON he.id_tutor = tt.id_tutor AND he.estado = 'Validado'
       GROUP BY
         tt.id_tutor,
         u.nombre,
@@ -862,30 +1003,19 @@ router.get("/reportes/horas", async (req, res) => {
         u.apellido_materno,
         u.correo,
         u.estatus,
-        tt.idioma,
-        tt.horas_acumuladas
-      ORDER BY tt.horas_acumuladas DESC, tutor ASC
+        tt.idioma
+      ORDER BY horas_validadas DESC, tutor ASC
       `
     );
 
     const headers = [
-      "ID Tutor",
-      "Tutor",
-      "Correo",
-      "Estado",
-      "Idioma perfil",
-      "Horas acumuladas",
-      "Beneficiarios asignados",
+      "ID Tutor", "Tutor", "Correo", "Estado", 
+      "Idioma perfil", "Horas validadas", "Beneficiarios asignados"
     ];
 
     const rows = result.rows.map((row) => [
-      row.id_tutor,
-      row.tutor,
-      row.correo,
-      row.estatus,
-      row.idioma || "",
-      row.horas_acumuladas || 0,
-      row.beneficiarios_asignados,
+      row.id_tutor, row.tutor, row.correo, row.estatus, 
+      row.idioma || "", row.horas_validadas, row.beneficiarios_asignados
     ]);
 
     sendCsv(res, "reporte_horas_tutores.csv", headers, rows);
@@ -933,7 +1063,7 @@ router.post("/beneficiarios", async (req, res) => {
       !correoLimpio ||
       !contrasenaLimpia ||
       !nivelLimpio ||
-      !tutorIdNumero
+      !matriculaLimpia
     ) {
       return res.status(400).json({
         message: "Completa los campos obligatorios del beneficiario.",
@@ -994,7 +1124,7 @@ router.post("/beneficiarios", async (req, res) => {
       `,
       [
         idUsuario,
-        matriculaLimpia || null,
+        matriculaLimpia,
         nivelLimpio,
         idiomaLimpio || null,
       ]
@@ -1002,27 +1132,29 @@ router.post("/beneficiarios", async (req, res) => {
 
     const idBeneficiario = beneficiarioInsertado.rows[0].id_beneficiario;
 
-    await client.query(
-      `
-      INSERT INTO asignacion (
-        id_tutor,
-        id_beneficiario,
-        periodo,
-        fecha_inicio,
-        fecha_fin,
-        estatus,
-        idioma
-      )
-      VALUES ($1, $2, $3, $4, $5, 'Activa', 'ingles')
-      `,
-      [
-        tutorIdNumero,
-        idBeneficiario,
-        periodoLimpio || "2026-A",
-        fecha_inicio || null,
-        fecha_fin || null,
-      ]
-    );
+    if (tutorIdNumero) {
+      await client.query(
+        `
+        INSERT INTO asignacion (
+          id_tutor,
+          id_beneficiario,
+          periodo,
+          fecha_inicio,
+          fecha_fin,
+          estatus,
+          idioma
+        )
+        VALUES ($1, $2, $3, $4, $5, 'Activa', 'ingles')
+        `,
+        [
+          tutorIdNumero,
+          idBeneficiario,
+          periodoLimpio || "2026-A",
+          fecha_inicio || null,
+          fecha_fin || null,
+        ]
+      );
+    }
 
     await client.query("COMMIT");
 
@@ -1068,6 +1200,7 @@ router.put("/beneficiarios/:id", async (req, res) => {
     const contrasenaLimpia = clean(contrasena);
     const nivelLimpio = clean(nivel);
     const estatusNormalizado = normalizeStatus(estatus);
+    const matriculaLimpia = clean(matricula_folio);
     const tutorIdNumero = Number(tutorId);
     const idAsignacionNumero = Number(id_asignacion);
 
@@ -1077,7 +1210,7 @@ router.put("/beneficiarios/:id", async (req, res) => {
       !apellidoPaternoLimpio ||
       !correoLimpio ||
       !nivelLimpio ||
-      !tutorIdNumero
+      !matriculaLimpia
     ) {
       return res.status(400).json({
         message: "Completa los campos obligatorios del beneficiario.",
@@ -1179,7 +1312,7 @@ router.put("/beneficiarios/:id", async (req, res) => {
       WHERE id_beneficiario = $4
       `,
       [
-        clean(matricula_folio) || null,
+        matriculaLimpia,
         nivelLimpio,
         clean(idioma) || null,
         idBeneficiario,
@@ -1187,46 +1320,55 @@ router.put("/beneficiarios/:id", async (req, res) => {
     );
 
     if (idAsignacionNumero) {
-      await client.query(
-        `
-        UPDATE asignacion
-        SET
-          id_tutor = $1,
-          periodo = $2,
-          fecha_inicio = $3,
-          fecha_fin = $4
-        WHERE id_asignacion = $5
-        `,
-        [
-          tutorIdNumero,
-          clean(periodo) || "2026-A",
-          fecha_inicio || null,
-          fecha_fin || null,
-          idAsignacionNumero,
-        ]
-      );
+      if (tutorIdNumero) {
+        await client.query(
+          `
+          UPDATE asignacion
+          SET
+            id_tutor = $1,
+            periodo = $2,
+            fecha_inicio = $3,
+            fecha_fin = $4
+          WHERE id_asignacion = $5
+          `,
+          [
+            tutorIdNumero,
+            clean(periodo) || "2026-A",
+            fecha_inicio || null,
+            fecha_fin || null,
+            idAsignacionNumero,
+          ]
+        );
+      } else {
+        await client.query(
+          `DELETE FROM asignacion WHERE id_asignacion = $1`,
+          [idAsignacionNumero]
+        );
+      }
     } else {
-      await client.query(
-        `
-        INSERT INTO asignacion (
-          id_tutor,
-          id_beneficiario,
-          periodo,
-          fecha_inicio,
-          fecha_fin,
-          estatus,
-          idioma
-        )
-        VALUES ($1, $2, $3, $4, $5, 'Activa', 'ingles')
-        `,
-        [
-          tutorIdNumero,
-          idBeneficiario,
-          clean(periodo) || "2026-A",
-          fecha_inicio || null,
-          fecha_fin || null,
-        ]
-      );
+      if (tutorIdNumero) {
+        await client.query(
+          `
+          INSERT INTO asignacion (
+            id_tutor,
+            id_beneficiario,
+            periodo,
+            fecha_inicio,
+            fecha_fin,
+            estatus,
+            idioma
+          )
+          VALUES ($1, $2, $3, $4, $5, 'Activa', 'ingles')
+          `,
+          [
+            tutorIdNumero,
+            idBeneficiario,
+            clean(periodo) || "2026-A",
+            fecha_inicio || null,
+            fecha_fin || null,
+          ]
+        );
+      }
     }
 
     await client.query("COMMIT");

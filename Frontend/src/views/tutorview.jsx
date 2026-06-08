@@ -13,27 +13,28 @@ export default function TutorView() {
   const [sessionTab, setSessionTab] = useState("registro");
   const [selectedStudent, setSelectedStudent] = useState(null);
 
+  const userContext = JSON.parse(localStorage.getItem("user") || "{}");
+  const tutorId = userContext.id_tutor || userContext.id_usuario;
+
   const softCard = "bg-white rounded-2xl border border-slate-200 shadow-sm";
   const tabClass = (active) =>
     `px-4 py-2 rounded-xl text-sm border transition ${active ? "bg-blue-600 text-white border-blue-600" : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"}`;
 
   const handleModuleChange = (module) => {
-    navigate(`/tutor${module === "dashboard" ? "" : `/${module}`}`);
+    navigate(`/tutor/${module}`);
   };
 
   const handleOpenStudent = (student, nextTab) => {
-  // Map whatever shape TutorStudents passes into what TutorSession expects
-  const mapped = {
-    id_asignacion: student.id_asignacion,
-    name: student.name ?? `${student.nombre ?? ""} ${student.apellido_paterno ?? ""}`.trim(),
-    level: student.level ?? student.nivel ?? "",
-    status: student.status ?? student.estatus ?? "",
-    program: student.program ?? student.idioma ?? "",
+    setSelectedStudent({
+      id_asignacion: student.id_asignacion,
+      name: student.name ?? `${student.nombre ?? ""} ${student.apellido_paterno ?? ""}`.trim(),
+      level: student.level ?? student.nivel ?? "",
+      status: student.status ?? student.estatus ?? "",
+      program: student.program ?? student.idioma ?? "",
+    });
+    if (nextTab) setSessionTab(nextTab);
+    navigate("/tutor/sesiones");
   };
-  setSelectedStudent(mapped);
-  if (nextTab) setSessionTab(nextTab);
-  navigate("/tutor/sesiones");
-};
 
   return (
     <div className="flex min-h-screen w-full bg-slate-50">
@@ -85,7 +86,7 @@ export default function TutorView() {
           />
           <Route
             path="horas"
-            element={<TutorHours softCard={softCard} />}
+            element={<TutorHours softCard={softCard} tutorId={tutorId} />}
           />
         </Routes>
       </main>

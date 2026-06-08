@@ -171,15 +171,16 @@ CREATE TABLE material (
 );
 
 CREATE TABLE sesion (
-    id_sesion          INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    id_asignacion      INTEGER NOT NULL,
-    fecha_sesion       DATE NOT NULL,
-    hora_inicio        TIME,
-    hora_fin           TIME,
-    tema               VARCHAR(150),
-    observaciones      TEXT,
-    asistencia         VARCHAR(30),
-    horas_registradas  NUMERIC(6,2) NOT NULL DEFAULT 0,
+    id_sesion            INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id_asignacion        INTEGER NOT NULL,
+    fecha_sesion         DATE NOT NULL,
+    hora_inicio          TIME,
+    hora_fin             TIME,
+    tema                 VARCHAR(150),
+    observaciones        TEXT,
+    asistencia           VARCHAR(30),
+    horas_registradas    NUMERIC(6,2) NOT NULL DEFAULT 0,
+    aprobado_padre_madre BOOLEAN,
 
     CONSTRAINT fk_sesion_asignacion
         FOREIGN KEY (id_asignacion)
@@ -197,18 +198,32 @@ CREATE TABLE sesion (
 );
 
 CREATE TABLE bitacora (
-    id_bitacora   INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    id_sesion     INTEGER NOT NULL,
-    fecha         TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    tipo          VARCHAR(50),
-    descripcion   TEXT,
-    archivo_url   VARCHAR(255),
+    id_bitacora                 INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id_sesion                   INTEGER NOT NULL,
+    fecha                       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    tipo                        VARCHAR(50),
+    descripcion                 TEXT,
+    archivo_url                 VARCHAR(255),
+    estatus                     VARCHAR(30) NOT NULL DEFAULT 'sin revisar',
+    hora                        TIME,
+    tema                        VARCHAR(150),
+    planeacion_siguiente_sesion TEXT,
+    tareas_asignadas            TEXT,
+    imagen_recordatorio         BYTEA,
+    imagen_recordatorio_tipo    VARCHAR(120),
+    imagen_sesion               BYTEA,
+    imagen_sesion_tipo          VARCHAR(120),
+    imagen_incidencia           BYTEA,
+    imagen_incidencia_tipo      VARCHAR(120),
 
     CONSTRAINT fk_bitacora_sesion
         FOREIGN KEY (id_sesion)
         REFERENCES sesion(id_sesion)
         ON UPDATE CASCADE
-        ON DELETE CASCADE
+        ON DELETE CASCADE,
+
+    CONSTRAINT chk_bitacora_estatus
+        CHECK (estatus IN ('sin revisar', 'aceptada', 'rechazada'))
 );
 
 CREATE TABLE avance (
@@ -398,8 +413,8 @@ WITH nuevo_socio_formador AS (
         nombre, apellido_paterno, apellido_materno, correo, contrasena, rol, estatus
     )
     VALUES (
-        'Socio','Formador','Talk','socio_formador@talk.com',
-        '$2a$12$5uL20rWrwL6CGvv6b22v3eeWBR.9/XEDB7FHZj.mrWPSR/zNF7g66',
+        'Socio','Formador','Talk','administrador',
+        'administrador123',
         'socio_formador','activo'
     )
     RETURNING id_usuario

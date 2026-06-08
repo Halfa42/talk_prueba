@@ -1,16 +1,18 @@
 import React, { useEffect, useState } from "react";
 import { Users, FolderOpen, ClipboardList, Clock3 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import KpiCard from "../../components/KpiCard";
 import "../../styles/tutor/TutorDashboard.css";
 
 const quickActions = [
-  ["students", "Mis alumnos", "Consulta perfiles y avance.", Users],
-  ["materials", "Materiales", "Consulta recursos compartidos.", FolderOpen],
-  ["tasks", "Tareas", "Asigna y revisa entregas.", ClipboardList],
-  ["hours", "Horas", "Consulta horas registradas.", Clock3],
+  ["beneficiarios", "Mis alumnos", "Consulta perfiles y avance.", Users],
+  ["materiales", "Materiales", "Consulta recursos compartidos.", FolderOpen],
+  ["tareas", "Tareas", "Asigna y revisa entregas.", ClipboardList],
+  ["horas", "Horas", "Consulta horas registradas.", Clock3],
 ];
 
 export default function TutorDashboard({ softCard, onModuleChange }) {
+  const navigate = useNavigate();
   const userContext = JSON.parse(localStorage.getItem("user") || "{}");
   const tutorId = userContext.id_tutor || userContext.id_usuario;
   const [showZoomModal, setShowZoomModal] = useState(false);
@@ -55,17 +57,7 @@ export default function TutorDashboard({ softCard, onModuleChange }) {
   };
 
   const loadDashboardData = async () => {
-    const rawUser = localStorage.getItem("user");
-    if (!rawUser) {
-      console.error("No hay usuario en localStorage");
-      return;
-    }
-    
-    const user = JSON.parse(rawUser);
-    const tutorId = user.id_tutor || user.id_usuario;
-
     if (!tutorId || tutorId === "undefined") {
-      console.error("El tutorId es inválido:", tutorId);
       return;
     }
 
@@ -84,7 +76,7 @@ export default function TutorDashboard({ softCard, onModuleChange }) {
       setCalendarRows(Array.isArray(calendarData) ? calendarData : []);
       setStudents(Array.isArray(studentsData) ? studentsData : []);
     } catch (error) {
-      console.error("Error loading dashboard data:", error);
+      console.error(error);
     }
   };
 
@@ -133,11 +125,9 @@ export default function TutorDashboard({ softCard, onModuleChange }) {
 
   const handleSessionInputChange = (e) => {
     const { name, value } = e.target;
-
     if (name === "hora_fin") {
       setHoraFinTouched(true);
     }
-
     setNewSession((prev) => {
       const updated = { ...prev, [name]: value };
       if (name === "hora_inicio" && !horaFinTouched) {
@@ -232,14 +222,18 @@ export default function TutorDashboard({ softCard, onModuleChange }) {
 
   return (
     <div className="space-y-6">
-      <div className="grid md:grid-cols-2 gap-2">
+      <div className="grid md:grid-cols-3 gap-2">
         <KpiCard
           title="Tareas por revisar"
           value={String(summary.tareas_por_revisar ?? 0)}
         />
         <KpiCard
+          title="Bitácoras pendientes"
+          value="0"
+        />
+        <KpiCard
           title="Horas acreditadas"
-          value={`${summary.horas_acreditadas ?? 0} h`}
+          value={`${summary.horas_acumuladas ?? 0} h`}
         />
       </div>
 
@@ -408,7 +402,6 @@ export default function TutorDashboard({ softCard, onModuleChange }) {
                 No hay alumnos asignados todavía.
               </div>
             )}
-
             {students.slice(0, 6).map((student) => (
               <div key={student.id_asignacion} className="p-3 rounded-xl bg-slate-50 border">
                 <div className="font-medium">
@@ -426,14 +419,12 @@ export default function TutorDashboard({ softCard, onModuleChange }) {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-2xl w-[500px]">
             <h3 className="font-semibold text-lg mb-4">Configurar Zoom</h3>
-
             <input
               className="w-full border rounded-xl px-4 py-3"
               value={zoomLink}
               onChange={(e) => setZoomLink(e.target.value)}
               placeholder="https://zoom.us/j/..."
             />
-
             {zoomMsg && (
               <p
                 className={`mt-2 ${
@@ -443,7 +434,6 @@ export default function TutorDashboard({ softCard, onModuleChange }) {
                 {zoomMsg.texto}
               </p>
             )}
-
             <div className="flex justify-end gap-2 mt-4">
               <button
                 onClick={() => setShowZoomModal(false)}
@@ -451,7 +441,6 @@ export default function TutorDashboard({ softCard, onModuleChange }) {
               >
                 Cancelar
               </button>
-
               <button
                 onClick={saveZoomLink}
                 className="px-4 py-2 bg-blue-600 text-white rounded-xl"

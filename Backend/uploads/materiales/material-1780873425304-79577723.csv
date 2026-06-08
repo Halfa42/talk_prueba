@@ -1,0 +1,5 @@
+﻿ID Tutor,Nombre,Apellido paterno,Apellido materno,Correo,Estado,Idioma perfil,Beneficiarios asignados,Horas validadas
+2,Alejandro,Cuevas,Talk,alejandro.cuevas@talk.com,activo,frances,1,0
+3,Erick,Paredes,Lopez,erick@talk.com,activo,ingles,1,4.00
+4,Jorge,Gutierrez,,jorge@talkc.om,activo,frances,1,0
+1,Tutor,Prueba,Talk,tutor@talk.com,activo,ingles,1,41.00

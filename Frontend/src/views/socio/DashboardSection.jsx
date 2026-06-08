@@ -1,4 +1,6 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import KpiCard from "../../components/KpiCard";
 import { isActiveStatus } from "./helpers";
 
@@ -6,28 +8,79 @@ export default function DashboardSection({
   beneficiarios,
   tutores,
   asignaciones,
-  hoursEvidence,
-  softCard,
-  setOrgModule,
+  softCard
 }) {
-  const totalHorasAcumuladas = (hoursEvidence || [])
-    .reduce((acc, registro) => acc + Number(registro.horas || 0), 0)
-    .toFixed(0);
+  const [kpis, setKpis] = useState({
+    bitacorasPendientes: 0,
+    alumnosIncidencias: []
+  });
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchDashboardInfo = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await axios.get("http://localhost:3000/api/dashboard/socio/summary", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setKpis({
+          bitacorasPendientes: response.data.bitacorasPendientes,
+          alumnosIncidencias: response.data.alumnosIncidencias
+        });
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchDashboardInfo();
+  }, []);
+
+  const totalPages = Math.ceil((asignaciones || []).length / itemsPerPage);
+  
+  const currentAsignaciones = (asignaciones || []).slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const showIncidenciasAlert = () => {
+    if (kpis.alumnosIncidencias.length === 0) return;
+    
+    const detalle = kpis.alumnosIncidencias
+      .map(a => `- ${a.nombre} ${a.apellido_paterno} (${a.total_incidencias} incidencias)`)
+      .join("\n");
+      
+    alert(`Alumnos con múltiples incidencias registradas:\n\n${detalle}`);
+  };
 
   return (
     <div className="space-y-6">
       <div className="grid md:grid-cols-3 gap-4">
         <KpiCard
           title="Beneficiarios activos"
-          value={beneficiarios.filter((b) => isActiveStatus(b.estatus)).length}
+          value={(beneficiarios || []).filter((b) => isActiveStatus(b.estatus)).length}
         />
         <KpiCard
           title="Tutores activos"
-          value={tutores.filter((t) => isActiveStatus(t.estatus)).length}
+          value={(tutores || []).filter((t) => isActiveStatus(t.estatus)).length}
         />
         <KpiCard
-          title="Horas acumuladas"
-          value={`${totalHorasAcumuladas} h`}
+          title="Bitácoras sin revisar"
+          value={kpis.bitacorasPendientes}
         />
       </div>
 
@@ -35,7 +88,7 @@ export default function DashboardSection({
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">Asignaciones recientes</h2>
           <button
-            onClick={() => setOrgModule("assignment")}
+            onClick={() => navigate("/org/assignment")}
             className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm"
           >
             Nueva asignación
@@ -53,7 +106,7 @@ export default function DashboardSection({
               </tr>
             </thead>
             <tbody>
-              {asignaciones.slice(0, 5).map((item) => (
+              {currentAsignaciones.map((item) => (
                 <tr
                   key={item.id_asignacion}
                   className="border-t border-slate-200 bg-white"
@@ -64,7 +117,7 @@ export default function DashboardSection({
                   <td className="p-3">{item.estatus}</td>
                 </tr>
               ))}
-              {asignaciones.length === 0 && (
+              {currentAsignaciones.length === 0 && (
                 <tr>
                   <td className="p-4 text-slate-500" colSpan="4">
                     No hay asignaciones registradas.
@@ -73,21 +126,59 @@ export default function DashboardSection({
               )}
             </tbody>
           </table>
+          
+          <div className="flex justify-between items-center p-3 border-t border-slate-200 bg-slate-50">
+            <button
+              onClick={handlePrevPage}
+              disabled={currentPage === 1}
+              className="px-3 py-1 bg-white border border-slate-300 rounded text-sm disabled:opacity-50"
+            >
+              Anterior
+            </button>
+            <span className="text-sm text-slate-500">
+              Página {currentPage} de {totalPages || 1}
+            </span>
+            <button
+              onClick={handleNextPage}
+              disabled={currentPage === totalPages || totalPages === 0}
+              className="px-3 py-1 bg-white border border-slate-300 rounded text-sm disabled:opacity-50"
+            >
+              Siguiente
+            </button>
+          </div>
         </div>
       </div>
 
       <div className={softCard + " p-5"}>
         <h3 className="font-semibold text-lg mb-4">Alertas operativas</h3>
-        <div className="grid md:grid-cols-3 gap-4 text-sm">
-          <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200">
-            2 tutores no han registrado sesión esta semana.
-          </div>
-          <div className="p-4 rounded-2xl bg-red-50 border border-red-200">
-            1 beneficiario tiene 3 faltas consecutivas.
-          </div>
-          <div className="p-4 rounded-2xl bg-blue-50 border border-blue-200">
-            5 materiales nuevos están pendientes de revisión.
-          </div>
+        <div className="grid md:grid-cols-2 gap-4 text-sm">
+          
+          {kpis.alumnosIncidencias.length > 0 ? (
+            <div 
+              onClick={showIncidenciasAlert}
+              className="p-4 rounded-2xl bg-red-50 border border-red-200 cursor-pointer hover:bg-red-100 transition-colors"
+            >
+              <span className="font-semibold text-red-700">Atención:</span> Hay {kpis.alumnosIncidencias.length} beneficiario(s) con 3 o más incidencias. (Clic para ver detalles)
+            </div>
+          ) : (
+            <div className="p-4 rounded-2xl bg-green-50 border border-green-200 text-green-700">
+              No hay beneficiarios con exceso de incidencias.
+            </div>
+          )}
+
+          {kpis.bitacorasPendientes > 0 ? (
+            <div 
+              onClick={() => navigate("/org/logs")}
+              className="p-4 rounded-2xl bg-amber-50 border border-amber-200 cursor-pointer hover:bg-amber-100 transition-colors"
+            >
+              <span className="font-semibold text-amber-700">Pendiente:</span> {kpis.bitacorasPendientes} bitácoras sin revisar. 
+            </div>
+          ) : (
+            <div className="p-4 rounded-2xl bg-green-50 border border-green-200 text-green-700">
+              Todas las bitácoras han sido revisadas.
+            </div>
+          )}
+
         </div>
       </div>
     </div>

@@ -32,7 +32,7 @@ export default function BeneficiaryModal({
         ? hasRequiredError(showValidation, beneficiaryForm.contrasena)
         : false,
       nivel: hasRequiredError(showValidation, beneficiaryForm.nivel),
-      tutorId: hasRequiredError(showValidation, beneficiaryForm.tutorId),
+      matricula_folio: hasRequiredError(showValidation, beneficiaryForm.matricula_folio),
     };
   }, [showValidation, beneficiaryForm, passwordRequired]);
 
@@ -58,6 +58,11 @@ export default function BeneficiaryModal({
       onClose={resetAndClose}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
+        
+        <p className="text-sm text-slate-600 mb-4 bg-slate-50 p-3 rounded-lg border border-slate-200">
+          Los campos marcados con <span className="text-red-500 font-bold">*</span> son obligatorios.
+        </p>
+
         <div className="grid md:grid-cols-2 gap-4">
           <div>
             {errors.nombre && (
@@ -174,14 +179,30 @@ export default function BeneficiaryModal({
           </div>
 
           <div>
-            {errors.tutorId && (
+            {errors.matricula_folio && (
               <span className={requiredTextClass()}>Campo obligatorio</span>
             )}
             <label className={labelClass()}>
-              Tutor asignado <span className="text-red-500">*</span>
+              Matrícula/Folio <span className="text-red-500">*</span>
+            </label>
+            <input
+              className={fieldClass(errors.matricula_folio)}
+              value={beneficiaryForm.matricula_folio}
+              onChange={(e) =>
+                setBeneficiaryForm({
+                  ...beneficiaryForm,
+                  matricula_folio: e.target.value,
+                })
+              }
+            />
+          </div>
+
+          <div>
+            <label className={labelClass()}>
+              Tutor asignado
             </label>
             <select
-              className={fieldClass(errors.tutorId)}
+              className={fieldClass(false)}
               value={beneficiaryForm.tutorId}
               onChange={(e) =>
                 setBeneficiaryForm({
@@ -214,20 +235,6 @@ export default function BeneficiaryModal({
               <option value="Activa">Activa</option>
               <option value="No activa">No activa</option>
             </select>
-          </div>
-
-          <div>
-            <label className={labelClass()}>Matrícula/Folio</label>
-            <input
-              className={fieldClass(false)}
-              value={beneficiaryForm.matricula_folio}
-              onChange={(e) =>
-                setBeneficiaryForm({
-                  ...beneficiaryForm,
-                  matricula_folio: e.target.value,
-                })
-              }
-            />
           </div>
 
           <div>

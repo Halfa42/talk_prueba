@@ -26,10 +26,8 @@ export default function App() {
       <div className="w-full h-full">
         <BrowserRouter>
           <Routes>
-            {/* Login */}
             <Route path="/" element={<HomeLogin />} />
 
-            {/* Rutas Privadas */}
             <Route 
               path="/tutor/*" 
               element={
@@ -40,7 +38,7 @@ export default function App() {
             />
             
             <Route 
-              path="/org/*" 
+              path="/org/:tab?" 
               element={
                 <RutaProtegida rolPermitido="socio_formador">
                   <OrgView />

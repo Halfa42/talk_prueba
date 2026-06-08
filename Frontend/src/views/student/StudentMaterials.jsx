@@ -18,7 +18,6 @@ export default function StudentMaterials({ softCard }) {
         const data = await res.json();
         
         if (Array.isArray(data)) {
-          // Normalizamos para agrupar A1, a1, b1, B1, etc.
           const normalizedData = data.map(m => ({
             ...m,
             nivel: m.nivel ? m.nivel.toUpperCase() : null

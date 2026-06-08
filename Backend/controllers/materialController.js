@@ -5,11 +5,6 @@ const uploadMaterial = async (req, res) => {
     const { titulo, tema, nivel, descripcion, id_asignacion } = req.body;
     const idAsignacion = id_asignacion ? Number(id_asignacion) : null;
     const file = req.file;
-    const allowedMimeTypes = [
-      'application/pdf',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    ];
 
     if (!titulo || !file) {
       return res.status(400).json({
@@ -20,12 +15,6 @@ const uploadMaterial = async (req, res) => {
     if (idAsignacion !== null && (!Number.isInteger(idAsignacion) || idAsignacion <= 0)) {
       return res.status(400).json({
         message: 'id_asignacion debe ser valido si se proporciona',
-      });
-    }
-
-    if (!allowedMimeTypes.includes(file.mimetype)) {
-      return res.status(400).json({
-        message: 'Archivo no subido, formato no permitido',
       });
     }
 

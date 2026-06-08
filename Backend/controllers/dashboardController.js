@@ -28,6 +28,40 @@ async function getRealTutorId(providedId) {
   return res.rows.length > 0 ? res.rows[0].id_tutor : providedId;
 }
 
+const getSocioDashboardSummary = async (req, res) => {
+  try {
+    const sqlBitacoras = `
+      SELECT COUNT(*) AS total_pendientes 
+      FROM bitacora 
+      WHERE estatus = 'sin revisar'
+    `;
+    const resultBitacoras = await query(sqlBitacoras);
+    const bitacorasPendientes = parseInt(resultBitacoras.rows[0].total_pendientes, 10);
+
+    const sqlIncidencias = `
+      SELECT u.nombre, u.apellido_paterno, COUNT(b.id_bitacora) as total_incidencias
+      FROM bitacora b
+      INNER JOIN sesion s ON b.id_sesion = s.id_sesion
+      INNER JOIN asignacion a ON s.id_asignacion = a.id_asignacion
+      INNER JOIN beneficiario ben ON a.id_beneficiario = ben.id_beneficiario
+      INNER JOIN usuario u ON ben.id_usuario = u.id_usuario
+      WHERE b.tipo = 'incidencia'
+      GROUP BY u.id_usuario, u.nombre, u.apellido_paterno
+      HAVING COUNT(b.id_bitacora) >= 3
+    `;
+    const resultIncidencias = await query(sqlIncidencias);
+    const alumnosIncidencias = resultIncidencias.rows;
+
+    return res.json({
+      bitacorasPendientes: bitacorasPendientes,
+      alumnosIncidencias: alumnosIncidencias
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Error interno del servidor' });
+  }
+};
+
 const getTutorDashboardSummary = async (req, res) => {
   try {
     const rawId = Number(req.params.tutorId);
@@ -59,7 +93,7 @@ const getTutorDashboardSummary = async (req, res) => {
       horas_acumuladas: Number(accumulatedHours.rows[0]?.total_horas || 0),
     });
   } catch (error) {
-    console.error('Error en getTutorDashboardSummary:', error);
+    console.error(error);
     return res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
@@ -104,7 +138,7 @@ const getTutorCalendar = async (req, res) => {
 
     return res.json(rows);
   } catch (error) {
-    console.error('Error en getTutorCalendar:', error);
+    console.error(error);
     return res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
@@ -149,7 +183,7 @@ const createCalendarSession = async (req, res) => {
 
     return res.status(201).json(insertResult.rows[0]);
   } catch (error) {
-    console.error('Error en createCalendarSession:', error);
+    console.error(error);
     return res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
@@ -180,7 +214,7 @@ const deleteCalendarSession = async (req, res) => {
 
     return res.json({ message: 'Sesion eliminada correctamente' });
   } catch (error) {
-    console.error('Error en deleteCalendarSession:', error);
+    console.error(error);
     return res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
@@ -192,64 +226,84 @@ const getTutorHours = async (req, res) => {
     
     const tutorId = await getRealTutorId(rawId);
 
-    const [totalsResult, sessionsResult] = await Promise.all([
+    const [tutorDataResult, bitacorasResult] = await Promise.all([
       query(
         `SELECT
-           COALESCE(SUM(s.horas_registradas), 0)::numeric(10,2) AS horas_registradas,
-           COALESCE(MAX(t.horas_acumuladas), 0)::numeric(10,2) AS horas_validadas
+           t.periodo,
+           (SELECT COUNT(DISTINCT id_beneficiario) FROM asignacion WHERE id_tutor = $1) AS beneficiarios,
+           COALESCE((
+             SELECT SUM(ROUND(EXTRACT(EPOCH FROM (s.hora_fin - s.hora_inicio))/3600::numeric, 2))
+             FROM sesion s
+             INNER JOIN asignacion a ON s.id_asignacion = a.id_asignacion
+             WHERE a.id_tutor = $1 AND s.tema IS DISTINCT FROM 'Sesion programada'
+           ), 0)::numeric(10,2) AS horas_registradas,
+           COALESCE((
+             SELECT SUM(he.horas)
+             FROM horas_evidencias he
+             WHERE he.id_tutor = $1 AND he.estado = 'Validado'
+           ), 0)::numeric(10,2) AS horas_validadas
          FROM tutortec t
-         LEFT JOIN asignacion a ON a.id_tutor = t.id_tutor
-         LEFT JOIN sesion s ON s.id_asignacion = a.id_asignacion
-         WHERE t.id_tutor = $1
-           AND s.tema IS DISTINCT FROM 'Sesion programada'`,
+         WHERE t.id_tutor = $1`,
         [tutorId]
       ),
       query(
         `SELECT
+           b.id_bitacora,
+           b.fecha AS fecha_bitacora,
+           b.hora,
+           b.tema AS tema_bitacora,
+           b.tipo,
+           b.descripcion,
+           b.planeacion_siguiente_sesion,
+           b.tareas_asignadas,
+           b.estatus,
+           (b.imagen_recordatorio IS NOT NULL) AS tiene_recordatorio,
+           (b.imagen_sesion IS NOT NULL) AS tiene_sesion,
+           (b.imagen_incidencia IS NOT NULL) AS tiene_incidencia,
            s.id_sesion,
            s.fecha_sesion,
            s.hora_inicio,
            s.hora_fin,
-           s.horas_registradas,
-           u.nombre,
-           u.apellido_paterno
-         FROM sesion s
+           s.tema AS tema_sesion,
+           tt.id_tutor,
+           CONCAT(u.nombre, ' ', u.apellido_paterno) AS tutor,
+           COALESCE(ROUND(EXTRACT(EPOCH FROM (s.hora_fin - s.hora_inicio))/3600::numeric, 2), 0) AS horas_calculadas
+         FROM bitacora b
+         INNER JOIN sesion s ON b.id_sesion = s.id_sesion
          INNER JOIN asignacion a ON s.id_asignacion = a.id_asignacion
-         INNER JOIN beneficiario b ON a.id_beneficiario = b.id_beneficiario
-         INNER JOIN usuario u ON b.id_usuario = u.id_usuario
+         INNER JOIN tutortec tt ON a.id_tutor = tt.id_tutor
+         INNER JOIN usuario u ON tt.id_usuario = u.id_usuario
          WHERE a.id_tutor = $1
-           AND s.tema IS DISTINCT FROM 'Sesion programada'
-         ORDER BY s.fecha_sesion DESC, s.hora_inicio DESC
-         LIMIT 50`,
+         ORDER BY b.fecha DESC`,
         [tutorId]
       ),
     ]);
 
-    const horasRegistradas = Number(totalsResult.rows[0]?.horas_registradas || 0);
-    const horasValidadas = Number(totalsResult.rows[0]?.horas_validadas || 0);
-    const pendientes = Math.max(0, horasRegistradas - horasValidadas);
+    if (tutorDataResult.rows.length === 0) {
+      return res.status(404).json({ message: 'Tutor no encontrado' });
+    }
 
-    const sesiones = sessionsResult.rows.map((row) => ({
-      id_sesion: row.id_sesion,
-      fecha_sesion: row.fecha_sesion,
-      alumno: `${row.nombre} ${row.apellido_paterno}`,
-      horario: `${String(row.hora_inicio || '').slice(0, 5)} - ${String(row.hora_fin || '').slice(0, 5)}`,
-      horas_registradas: Number(row.horas_registradas || 0),
-    }));
+    const tutorData = tutorDataResult.rows[0];
+    const horasRegistradas = Number(tutorData.horas_registradas || 0);
+    const horasValidadas = Number(tutorData.horas_validadas || 0);
+    const pendientes = Math.max(0, horasRegistradas - horasValidadas);
 
     return res.json({
       horas_registradas: horasRegistradas,
       horas_validadas: horasValidadas,
-      pendientes,
-      sesiones,
+      pendientes: pendientes,
+      periodo: tutorData.periodo || 'Agosto-Diciembre',
+      beneficiarios: Number(tutorData.beneficiarios || 1),
+      bitacoras: bitacorasResult.rows
     });
   } catch (error) {
-    console.error('Error en getTutorHours:', error);
+    console.error(error);
     return res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
 
 module.exports = {
+  getSocioDashboardSummary,
   getTutorDashboardSummary,
   getTutorCalendar,
   createCalendarSession,

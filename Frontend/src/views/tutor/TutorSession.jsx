@@ -8,7 +8,6 @@ function SessionMainPanel({ softCard, sessionTab, selectedStudent }) {
   const hasValidAsignacion =
     Number.isInteger(Number(idAsignacion)) && Number(idAsignacion) > 0;
 
-  // --- Registro ---
   const [registro, setRegistro] = useState({
     fecha_sesion: "",
     hora_inicio: "",
@@ -18,36 +17,30 @@ function SessionMainPanel({ softCard, sessionTab, selectedStudent }) {
   });
 
   const [registroMsg, setRegistroMsg] = useState(null);
+  const [horaFinTouched, setHoraFinTouched] = useState(false);
+  const [zoomLink, setZoomLink] = useState("");
+  const [enterado, setEnterado] = useState(false);
+
   const addOneHour = (time) => {
     if (!time) return "";
-
     const [h, m] = time.split(":").map(Number);
-
     const date = new Date();
     date.setHours(h);
     date.setMinutes(m);
-
     date.setHours(date.getHours() + 1);
-
     return date.toTimeString().slice(0, 5);
   };
 
-  const [horaFinTouched, setHoraFinTouched] = useState(false);
-
   const handleRegistroChange = (e) => {
     const { name, value } = e.target;
-
     if (name === "hora_fin") {
       setHoraFinTouched(true);
     }
-
     setRegistro((prev) => {
       const updated = { ...prev, [name]: value };
-
       if (name === "hora_inicio" && !horaFinTouched) {
         updated.hora_fin = addOneHour(value);
       }
-
       return updated;
     });
   };
@@ -101,7 +94,6 @@ function SessionMainPanel({ softCard, sessionTab, selectedStudent }) {
         aprobado_padre_madre: "",
       });
       setHoraFinTouched(false);
-
       setEnterado(false);
     } catch (err) {
       setRegistroMsg({
@@ -111,21 +103,15 @@ function SessionMainPanel({ softCard, sessionTab, selectedStudent }) {
     }
   };
 
-  const [zoomLink, setZoomLink] = useState("");
-  const [enterado, setEnterado] = useState(false);
-
   useEffect(() => {
     const loadZoomLink = async () => {
       try {
         const userContext = JSON.parse(localStorage.getItem("user") || "{}");
         const tutorId = userContext.id_tutor || userContext.id_usuario;
-
         const res = await fetch(
-          `http://localhost:3000/api/zoom-link/${tutorId}`,
+          `http://localhost:3000/api/zoom-link/${tutorId}`
         );
-
         const data = await res.json();
-
         if (data?.zoom_link) {
           setZoomLink(data.zoom_link);
         }
@@ -133,15 +119,13 @@ function SessionMainPanel({ softCard, sessionTab, selectedStudent }) {
         console.error(error);
       }
     };
-
     loadZoomLink();
   }, []);
 
-  // --- Bitácora ---
   const [bitacora, setBitacora] = useState({
     tipo: "",
     fecha: "",
-    hora: "",
+    horas: "",
     tema: "",
     descripcion: "",
     planeacion_siguiente_sesion: "",
@@ -182,7 +166,7 @@ function SessionMainPanel({ softCard, sessionTab, selectedStudent }) {
       formData.append("id_asignacion", String(idAsignacion));
       formData.append("tipo", bitacora.tipo);
       formData.append("fecha", bitacora.fecha);
-      formData.append("hora", bitacora.hora);
+      formData.append("horas", bitacora.horas);
 
       if (bitacora.tipo === "Incidencia") {
         formData.append("descripcion", bitacora.tipo_incidencia);
@@ -193,7 +177,7 @@ function SessionMainPanel({ softCard, sessionTab, selectedStudent }) {
         formData.append("descripcion", bitacora.descripcion);
         formData.append(
           "planeacion_siguiente_sesion",
-          bitacora.planeacion_siguiente_sesion,
+          bitacora.planeacion_siguiente_sesion
         );
         formData.append("tareas_asignadas", bitacora.tareas_asignadas);
         if (bitacora.imagen_recordatorio)
@@ -214,7 +198,7 @@ function SessionMainPanel({ softCard, sessionTab, selectedStudent }) {
       setBitacora({
         tipo: "",
         fecha: "",
-        hora: "",
+        horas: "",
         tema: "",
         descripcion: "",
         planeacion_siguiente_sesion: "",
@@ -228,7 +212,7 @@ function SessionMainPanel({ softCard, sessionTab, selectedStudent }) {
       setBitacoraMsg({ tipo: "error", texto: err.message });
     }
   };
-  // --- Evidencias (se conserva para uso futuro) ---
+
   const [archivo, setArchivo] = useState(null);
   const [evidenciaMsg, setEvidenciaMsg] = useState(null);
 
@@ -325,13 +309,8 @@ function SessionMainPanel({ softCard, sessionTab, selectedStudent }) {
             onChange={handleRegistroChange}
           >
             <option value="">Selecciona asistencia</option>
-
             <option value="TUTOR_TITULAR">Asistencia TUTOR TITULAR</option>
-
-            <option value="BACKUP">
-              Asistencia Tutor de reemplazo "BACK UP"
-            </option>
-
+            <option value="BACKUP">Asistencia Tutor de reemplazo "BACK UP"</option>
             <option value="APOYO">Asistencia Tutor de APOYO</option>
           </select>
           <div className="md:col-span-2">
@@ -369,26 +348,19 @@ function SessionMainPanel({ softCard, sessionTab, selectedStudent }) {
 
           <div className="space-y-2 text-sm">
             <p>La tolerancia es de máximo 10 minutos.</p>
-
             <p>
               Después de esta hora, si el alumno o alumna no asiste, debes
               reportarlo en el Formato de incidencias con la evidencia
               correspondiente.
             </p>
-
             <p>Retardos y faltas debes reportarlas a los padres de familia.</p>
-
             <p>3 FALTAS del alumno = BAJA</p>
-
             <p>3 RETARDOS del alumno = 1 FALTA</p>
-
             <p>
               Después de tus asesorías, debes llenar el expediente
               correspondiente.
             </p>
-
             <p>El reporte de incidencias y el expediente deben coincidir.</p>
-
             <p>
               El expediente debe llenarse a más tardar al día siguiente antes
               del mediodía.
@@ -440,7 +412,6 @@ function SessionMainPanel({ softCard, sessionTab, selectedStudent }) {
       <div className={softCard + " p-5"}>
         <h3 className="font-semibold text-lg mb-4">Bitácora</h3>
 
-        {/* Always-visible top fields */}
         <div className="grid md:grid-cols-2 gap-4">
           <input
             className="rounded-xl border border-slate-300 px-4 py-3 bg-slate-50"
@@ -470,14 +441,16 @@ function SessionMainPanel({ softCard, sessionTab, selectedStudent }) {
 
           <input
             className="rounded-xl border border-slate-300 px-4 py-3"
-            type="time"
-            name="hora"
-            value={bitacora.hora}
+            type="number"
+            name="horas"
+            placeholder="Número de horas impartidas (Ej: 1.5)"
+            value={bitacora.horas}
             onChange={handleBitacoraChange}
+            min="0.5"
+            step="0.5"
           />
         </div>
 
-        {/* ── INCIDENCIA form ── */}
         {bitacora.tipo === "Incidencia" && (
           <>
             <div className="mt-4">
@@ -521,7 +494,6 @@ function SessionMainPanel({ softCard, sessionTab, selectedStudent }) {
           </>
         )}
 
-        {/* ── SEGUIMIENTO form (default / when tipo is "Seguimiento" or empty) ── */}
         {bitacora.tipo !== "Incidencia" && (
           <>
             <div className="mt-4">

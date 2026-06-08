@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
+import { useParams, useNavigate } from "react-router-dom";
 
 import SocioSidebar from "./socio/SocioSidebar";
 import BeneficiaryModal from "./socio/BeneficiaryModal";
@@ -17,7 +18,13 @@ import HoursEvidenceSection from "./socio/HoursEvidenceSection";
 import { formatInputDate, isActiveStatus } from "./socio/helpers";
 
 export default function OrgView({ onLogout }) {
-  const [orgModule, setOrgModule] = useState("dashboard");
+  const { tab } = useParams();
+  const navigate = useNavigate();
+  const activeTab = tab || "dashboard";
+
+  const setOrgModule = (module) => {
+    navigate(`/org/${module}`);
+  };
 
   const [beneficiarios, setBeneficiarios] = useState([]);
   const [tutores, setTutores] = useState([]);
@@ -26,6 +33,7 @@ export default function OrgView({ onLogout }) {
   const [asignaciones, setAsignaciones] = useState([]);
   const [seguimientos, setSeguimientos] = useState([]);
   const [hoursEvidence, setHoursEvidence] = useState([]);
+  const [bitacoras, setBitacoras] = useState([]);
 
   const [showBeneficiaryModal, setShowBeneficiaryModal] = useState(false);
   const [showTutorModal, setShowTutorModal] = useState(false);
@@ -147,6 +155,11 @@ export default function OrgView({ onLogout }) {
     setHoursEvidence(response.data);
   };
 
+  const loadBitacoras = async () => {
+    const response = await axios.get("http://localhost:3000/api/org/bitacoras");
+    setBitacoras(response.data);
+  };
+
   const loadAllData = async () => {
     try {
       await Promise.all([
@@ -157,6 +170,7 @@ export default function OrgView({ onLogout }) {
         loadAsignaciones(),
         loadSeguimientos(),
         loadHoursEvidence(),
+        loadBitacoras(),
       ]);
     } catch (error) {
       console.error("Error al cargar datos:", error);
@@ -467,6 +481,23 @@ export default function OrgView({ onLogout }) {
     }
   };
 
+  const handleDeleteTracking = async (id) => {
+    const confirmed = window.confirm(
+      "¿Seguro que deseas eliminar este registro de seguimiento?"
+    );
+    if (!confirmed) return;
+
+    try {
+      await axios.delete(`http://localhost:3000/api/org/seguimiento/${id}`);
+      await loadSeguimientos();
+      setStatusMessage("✅ Registro eliminado correctamente.");
+    } catch (error) {
+      setStatusMessage(
+        `❌ ${error.response?.data?.message || "No se pudo eliminar el registro."}`
+      );
+    }
+  };
+
   const handleCreateHoursEvidence = async (e) => {
     e.preventDefault();
     setStatusMessage("");
@@ -501,6 +532,23 @@ export default function OrgView({ onLogout }) {
     } catch (error) {
       setStatusMessage(
         `❌ ${error.response?.data?.message || "No se pudo actualizar el registro."}`
+      );
+    }
+  };
+
+  const handleDeleteHoursEvidence = async (id) => {
+    const confirmed = window.confirm(
+      "¿Seguro que deseas eliminar este registro?"
+    );
+    if (!confirmed) return;
+
+    try {
+      await axios.delete(`http://localhost:3000/api/org/horas-evidencias/${id}`);
+      await loadHoursEvidence();
+      setStatusMessage("✅ Registro eliminado correctamente.");
+    } catch (error) {
+      setStatusMessage(
+        `❌ ${error.response?.data?.message || "No se pudo eliminar el registro."}`
       );
     }
   };
@@ -554,23 +602,6 @@ export default function OrgView({ onLogout }) {
     }
   };
 
-  const handleDeleteHoursEvidence = async (id) => {
-    const confirmed = window.confirm(
-      "¿Seguro que deseas eliminar este registro?"
-    );
-    if (!confirmed) return;
-
-    try {
-      await axios.delete(`http://localhost:3000/api/org/horas-evidencias/${id}`);
-      await loadHoursEvidence();
-      setStatusMessage("✅ Registro eliminado correctamente.");
-    } catch (error) {
-      setStatusMessage(
-        `❌ ${error.response?.data?.message || "No se pudo eliminar el registro."}`
-      );
-    }
-  };
-
   const handleSaveMaterial = async (e) => {
     e.preventDefault();
     setStatusMessage("");
@@ -610,21 +641,40 @@ export default function OrgView({ onLogout }) {
     }
   };
 
+  const handleReviewBitacora = async (idBitacora, estatus, tutorId, horas) => {
+    try {
+      await axios.put(`http://localhost:3000/api/org/bitacoras/${idBitacora}/review`, {
+        estatus,
+        tutorId,
+        horas
+      });
+      
+      await loadBitacoras();
+      if (estatus === 'aceptada') {
+        await loadHoursEvidence();
+      }
+      
+      setStatusMessage("✅ Bitácora revisada correctamente.");
+    } catch (error) {
+      setStatusMessage(
+        `❌ ${error.response?.data?.message || "No se pudo procesar la revisión."}`
+      );
+    }
+  };
+
   const renderContent = () => {
-    if (orgModule === "dashboard") {
+    if (activeTab === "dashboard") {
       return (
         <DashboardSection
           beneficiarios={beneficiarios}
           tutores={tutores}
           asignaciones={asignaciones}
-          hoursEvidence={hoursEvidence}
           softCard={softCard}
-          setOrgModule={setOrgModule}
         />
       );
     }
 
-    if (orgModule === "beneficiaries") {
+    if (activeTab === "beneficiaries") {
       return (
         <BeneficiariesSection
           beneficiarios={beneficiarios}
@@ -638,7 +688,7 @@ export default function OrgView({ onLogout }) {
       );
     }
 
-    if (orgModule === "tutors") {
+    if (activeTab === "tutors") {
       return (
         <TutorsSection
           tutores={tutores}
@@ -652,7 +702,7 @@ export default function OrgView({ onLogout }) {
       );
     }
 
-    if (orgModule === "assignment") {
+    if (activeTab === "assignment") {
       return (
         <AssignmentsSection
           softCard={softCard}
@@ -672,7 +722,7 @@ export default function OrgView({ onLogout }) {
       );
     }
 
-    if (orgModule === "tracking") {
+    if (activeTab === "tracking") {
       return (
         <TrackingSection
           softCard={softCard}
@@ -681,25 +731,28 @@ export default function OrgView({ onLogout }) {
           trackingForm={trackingForm}
           setTrackingForm={setTrackingForm}
           onSubmit={handleSaveTracking}
+          onDelete={handleDeleteTracking}
         />
       );
     }
 
-    if (orgModule === "logs") {
+    if (activeTab === "logs") {
       return (
         <HoursEvidenceSection
           softCard={softCard}
           hoursEvidence={hoursEvidence}
+          bitacoras={bitacoras}
           editButtonClass={editButtonClass}
           deleteButtonClass={deleteButtonClass}
           onCreate={openCreateHoursEvidenceModal}
           onEdit={openEditHoursEvidenceModal}
           onDelete={handleDeleteHoursEvidence}
+          onReviewBitacora={handleReviewBitacora}
         />
       );
     }
 
-    if (orgModule === "reports") {
+    if (activeTab === "reports") {
       return (
         <ReportsSection
           softCard={softCard}
@@ -708,7 +761,7 @@ export default function OrgView({ onLogout }) {
       );
     }
 
-    if (orgModule === "materials") {
+    if (activeTab === "materials") {
       return (
         <MaterialsSection
           softCard={softCard}
@@ -723,13 +776,20 @@ export default function OrgView({ onLogout }) {
       );
     }
 
-    return null;
+    return (
+      <DashboardSection
+        beneficiarios={beneficiarios}
+        tutores={tutores}
+        asignaciones={asignaciones}
+        softCard={softCard}
+      />
+    );
   };
 
   return (
     <div className="flex min-h-screen w-full bg-slate-100">
       <SocioSidebar
-        orgModule={orgModule}
+        orgModule={activeTab}
         setOrgModule={setOrgModule}
         onLogout={onLogout}
       />
